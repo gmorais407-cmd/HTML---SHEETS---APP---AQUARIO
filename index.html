@@ -1004,13 +1004,18 @@ function applyRoleRestrictions() {
 
   // Lock restricted nav buttons for viewers
   document.querySelectorAll('.nav-btn').forEach(btn => {
-    const onclick = btn.getAttribute('onclick') || '';
-    const isRestricted = ADMIN_ONLY_PAGES.some(p => onclick.includes("'"+p+"'") || onclick.includes('"'+p+'"'));
+    const attrOnclick = btn.getAttribute('onclick') || '';
+    const isRestricted = ADMIN_ONLY_PAGES.some(p => attrOnclick.includes("'"+p+"'") || attrOnclick.includes('"'+p+'"'));
     if (isRestricted && isViewer) {
       btn.classList.add('locked');
-      btn.onclick = () => toast('⛔ Acesso restrito ao Administrador', 'error');
+      btn._lockedHandler = (e) => { e.stopImmediatePropagation(); e.preventDefault(); toast('⛔ Acesso restrito ao Administrador', 'error'); };
+      btn.addEventListener('click', btn._lockedHandler, true);
     } else {
       btn.classList.remove('locked');
+      if (btn._lockedHandler) {
+        btn.removeEventListener('click', btn._lockedHandler, true);
+        btn._lockedHandler = null;
+      }
     }
   });
 
