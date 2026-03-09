@@ -1,5 +1,17 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+<form id="form">
+
+<input id="cad-cod" name="codigo">
+<input id="cad-desc" name="descricao">
+<input id="cad-area" name="area">
+<input id="cad-peso" name="peso">
+<input id="cad-forecast" name="forecast">
+<input id="cad-valor" name="valor">
+
+<button type="submit">Salvar</button>
+   
+</form>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -103,7 +115,7 @@ body {
 .kpi-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; margin-bottom: 24px; }
 .kpi {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 10px; padding: 16px 18px;
+  border-radius: 10px; padding: 16px 18px;                           
   transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
 }
 .kpi:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(3,102,165,0.10); border-color: var(--b3); }
@@ -1721,6 +1733,21 @@ function cadLimpar() {
 renderDashboard();
 renderTable();
 simRenderItems();
+</script>
+<script>
+const scriptURL = "https://script.google.com/macros/s/AKfycbyMAeV_z-HUKltheI8GsoHCXpVifC3FCNvCzjpmQRRnH3uE3TKSFCRe6-RUI-dnBo9bhw/exec"
+const form = document.getElementById('form')
+
+form.addEventListener('submit', e => {
+  e.preventDefault()
+
+  fetch(scriptURL, {
+    method: 'POST',
+    body: new FormData(form)
+  })
+  .then(response => alert("Saved to Google Sheets"))
+  .catch(error => alert("Error"))
+})
 </script>
 </body>
 </html>
