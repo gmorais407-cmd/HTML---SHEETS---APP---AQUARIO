@@ -390,6 +390,93 @@ tbody tr:last-child td { border-bottom: none; }
   font-family: 'IBM Plex Mono', monospace; }
 .hist-table tr:last-child td { border-bottom: none; }
 
+/* ── LOGIN SCREEN ── */
+#login-screen {
+  position: fixed; inset: 0; z-index: 99999;
+  background: linear-gradient(135deg, #0f1e2e 0%, #0366a5 60%, #3eac48 100%);
+  display: flex; align-items: center; justify-content: center;
+}
+#login-screen.hidden { display: none; }
+.login-card {
+  background: #fff; border-radius: 18px;
+  padding: 44px 40px 36px;
+  width: 380px; max-width: 95vw;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.35);
+  display: flex; flex-direction: column; align-items: center; gap: 0;
+}
+.login-logo {
+  font-family: 'Barlow', sans-serif;
+  font-size: 1.25rem; font-weight: 900; letter-spacing: 3px;
+  text-transform: uppercase; color: var(--b1); margin-bottom: 4px;
+}
+.login-logo em { color: var(--b2); font-style: normal; }
+.login-sub {
+  font-size: 0.75rem; color: var(--text2);
+  font-family: 'IBM Plex Mono', monospace;
+  margin-bottom: 32px; letter-spacing: 0.5px;
+}
+.login-field { width: 100%; margin-bottom: 14px; }
+.login-field label {
+  display: block; font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase;
+  color: var(--b1); margin-bottom: 5px;
+}
+.login-field input {
+  width: 100%; padding: 10px 14px;
+  border: 1.5px solid var(--border); border-radius: 8px;
+  font-family: 'Barlow', sans-serif; font-size: 0.9rem;
+  color: var(--text); background: var(--bg);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.login-field input:focus {
+  outline: none; border-color: var(--b1);
+  box-shadow: 0 0 0 3px rgba(3,102,165,0.12);
+}
+.login-field input.login-error { border-color: var(--red); }
+.login-err-msg {
+  font-size: 0.75rem; color: var(--red);
+  background: var(--red-dim); border-radius: 6px;
+  padding: 7px 12px; width: 100%; margin-bottom: 12px;
+  display: none; text-align: center;
+}
+.login-err-msg.show { display: block; }
+.login-btn {
+  width: 100%; padding: 11px; border: none; border-radius: 8px;
+  background: var(--b1); color: #fff;
+  font-family: 'Barlow', sans-serif; font-size: 0.95rem;
+  font-weight: 700; cursor: pointer; letter-spacing: 0.5px;
+  transition: background 0.15s, box-shadow 0.15s; margin-top: 6px;
+}
+.login-btn:hover { background: #024f82; box-shadow: 0 4px 14px rgba(3,102,165,0.30); }
+.login-footer {
+  margin-top: 22px; font-size: 0.68rem;
+  color: var(--text2); text-align: center; line-height: 1.6;
+}
+
+/* ── USER BADGE IN HEADER ── */
+.user-badge {
+  display: flex; align-items: center; gap: 8px;
+  margin-left: 12px; flex-shrink: 0;
+}
+.user-role-tag {
+  font-size: 0.65rem; font-family: 'IBM Plex Mono', monospace;
+  font-weight: 700; padding: 3px 9px; border-radius: 20px;
+  border: 1px solid rgba(255,255,255,0.35); color: rgba(255,255,255,0.90);
+  background: rgba(255,255,255,0.13); white-space: nowrap;
+}
+.user-role-tag.admin { border-color: var(--b4); color: var(--b4); }
+.logout-btn {
+  padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.30);
+  background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.75);
+  font-family: 'Barlow', sans-serif; font-size: 0.73rem;
+  font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap;
+}
+.logout-btn:hover { background: rgba(192,57,43,0.25); color: #fff; border-color: rgba(192,57,43,0.5); }
+
+/* ── VIEWER LOCK OVERLAY (for restricted nav items) ── */
+.nav-btn.locked { opacity: 0.45; cursor: not-allowed; }
+.nav-btn.locked:hover { background: transparent; color: rgba(255,255,255,0.65); }
+
 /* responsive */
 @media(max-width:1100px){
   .kpi-grid { grid-template-columns: repeat(3,1fr); }
@@ -411,8 +498,31 @@ tbody tr:last-child td { border-bottom: none; }
 </head>
 <body>
 
+<!-- LOGIN SCREEN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">BANHO<em>.</em>GESTÃO</div>
+    <div class="login-sub">Sistema de Gestão de Banho Galvânico</div>
+
+    <div class="login-field">
+      <label>E-mail</label>
+      <input type="email" id="login-email" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-field">
+      <label>Senha</label>
+      <input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-err-msg" id="login-err">E-mail ou senha incorretos. Tente novamente.</div>
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+    <div class="login-footer">
+      Acesso restrito a usuários autorizados.<br>
+      Em caso de dúvidas, contate o administrador.
+    </div>
+  </div>
+</div>
+
 <!-- DB Loading Overlay -->
-<div id="db-loader" style="display:flex;position:fixed;inset:0;z-index:9999;background:rgba(245,248,251,0.97);flex-direction:column;align-items:center;justify-content:center;gap:16px">
+<div id="db-loader" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(245,248,251,0.97);flex-direction:column;align-items:center;justify-content:center;gap:16px">
   <div style="width:48px;height:48px;border:4px solid #cdd8e4;border-top-color:#0366a5;border-radius:50%;animation:_spin 0.8s linear infinite"></div>
   <div style="font-family:'Barlow',sans-serif;font-weight:700;color:#0366a5;font-size:1rem;letter-spacing:1px">Conectando ao banco de dados...</div>
   <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:#556678">Firebase · Firestore</div>
@@ -430,6 +540,10 @@ tbody tr:last-child td { border-bottom: none; }
     <button class="nav-btn" onclick="nav('cadastro',this)">+ Cadastrar Peça</button>
   </nav>
   <div class="header-badge" id="hdr-badge">204 peças</div>
+  <div class="user-badge">
+    <span class="user-role-tag" id="user-role-tag"></span>
+    <button class="logout-btn" onclick="doLogout()">Sair</button>
+  </div>
 </header>
 
 <div class="main">
@@ -820,6 +934,108 @@ tbody tr:last-child td { border-bottom: none; }
 <div class="toast" id="toast"></div>
 
 <script>
+// ══════════════════════════════════════════════
+//  AUTH — Login / Role Management
+// ══════════════════════════════════════════════
+const ACCOUNTS = [
+  { email: 'pcp@teste.com',        pass: 'Pcp@5011',  role: 'admin',  label: 'Admin · PCP' },
+  { email: 'qualidade@teste.com',  pass: 'Qld@5012',  role: 'viewer', label: 'Visualizador · Qualidade' }
+];
+
+// Pages/buttons that only admin can access
+const ADMIN_ONLY_PAGES = ['base', 'cadastro'];
+
+let currentUser = null;
+
+function doLogin() {
+  const email = document.getElementById('login-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('login-err');
+  const emailInp = document.getElementById('login-email');
+  const passInp  = document.getElementById('login-pass');
+
+  const account = ACCOUNTS.find(a => a.email === email && a.pass === pass);
+
+  if (!account) {
+    errEl.classList.add('show');
+    emailInp.classList.add('login-error');
+    passInp.classList.add('login-error');
+    passInp.value = '';
+    passInp.focus();
+    return;
+  }
+
+  errEl.classList.remove('show');
+  emailInp.classList.remove('login-error');
+  passInp.classList.remove('login-error');
+
+  currentUser = account;
+  document.getElementById('login-screen').classList.add('hidden');
+
+  // Update header badge
+  const roleTag = document.getElementById('user-role-tag');
+  roleTag.textContent = account.label;
+  if (account.role === 'admin') roleTag.classList.add('admin');
+
+  // Lock nav items for viewer
+  applyRoleRestrictions();
+
+  // Initialize app if not yet done
+  if (!window._appInitialized) {
+    window._appInitialized = true;
+    document.getElementById('db-loader').style.display = 'flex';
+    initApp();
+  }
+}
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-err').classList.remove('show');
+  document.getElementById('login-screen').classList.remove('hidden');
+  document.getElementById('user-role-tag').textContent = '';
+  document.getElementById('user-role-tag').classList.remove('admin');
+}
+
+function applyRoleRestrictions() {
+  if (!currentUser) return;
+  const isViewer = currentUser.role === 'viewer';
+
+  // Lock restricted nav buttons for viewers
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    const onclick = btn.getAttribute('onclick') || '';
+    const isRestricted = ADMIN_ONLY_PAGES.some(p => onclick.includes("'"+p+"'") || onclick.includes('"'+p+'"'));
+    if (isRestricted && isViewer) {
+      btn.classList.add('locked');
+      btn.onclick = () => toast('⛔ Acesso restrito ao Administrador', 'error');
+    } else {
+      btn.classList.remove('locked');
+    }
+  });
+
+  // Hide edit/delete action buttons in the table for viewers
+  _viewerMode = isViewer;
+}
+
+function checkAuth() {
+  if (!currentUser) {
+    toast('⛔ Faça login para continuar', 'error');
+    return false;
+  }
+  return true;
+}
+
+function checkAdmin() {
+  if (!currentUser || currentUser.role !== 'admin') {
+    toast('⛔ Ação restrita ao Administrador', 'error');
+    return false;
+  }
+  return true;
+}
+
+let _viewerMode = false;
+
 // ══════════════════════════════════════════════
 //  DATA & STATE
 // ══════════════════════════════════════════════
@@ -1217,6 +1433,7 @@ function calcUpdatePreview() {
 }
 
 function applyUpdate() {
+  if (!checkAdmin()) return;
   const mat  = document.getElementById('upd-mat').value;
   const proc = document.getElementById('upd-proc').value;
   const tipo = document.getElementById('upd-tipo').value;
@@ -1530,6 +1747,7 @@ function simCalc() { simRecalcAll(); }
 //  PRODUCT ACTIONS: DELETE, DUPLICATE, EDIT
 // ══════════════════════════════════════════════
 function deleteProduct(cod) {
+  if (!checkAdmin()) return;
   const p = STATE.products.find(x => x.cod === cod);
   if (!p) return;
   showConfirm(
@@ -1547,6 +1765,7 @@ function deleteProduct(cod) {
 }
 
 function duplicateProduct(cod) {
+  if (!checkAdmin()) return;
   const p = STATE.products.find(x => x.cod === cod);
   if (!p) return;
   // Generate new code
@@ -1567,6 +1786,7 @@ function duplicateProduct(cod) {
 
 let _editCod = null;
 function editProduct(cod) {
+  if (!checkAdmin()) return;
   const p = STATE.products.find(x => x.cod === cod);
   if (!p) return;
   _editCod = cod;
@@ -1584,6 +1804,7 @@ function editProduct(cod) {
 }
 
 function editSalvar() {
+  if (!checkAdmin()) return;
   if (!_editCod) return;
   const p = STATE.products.find(x => x.cod === _editCod);
   if (!p) return;
@@ -1699,6 +1920,7 @@ function cadPreview() {
 }
 
 function cadSalvar() {
+  if (!checkAdmin()) return;
   const cod  = document.getElementById('cad-cod').value.trim();
   const desc = document.getElementById('cad-desc').value.trim();
   const mat  = document.getElementById('cad-mat').value;
@@ -1744,7 +1966,7 @@ function cadLimpar() {
 // ══════════════════════════════════════════════
 //  INIT — Load from Firebase then render
 // ══════════════════════════════════════════════
-(async function initApp() {
+async function initApp() {
   try {
     const snap = await DOC_REF.get();
     if (snap.exists) {
@@ -1776,7 +1998,7 @@ function cadLimpar() {
     renderDashboard();
     renderTable();
   });
-})();
+}
 </script>
 </body>
 </html>
