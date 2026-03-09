@@ -103,7 +103,7 @@ body {
 .kpi-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; margin-bottom: 24px; }
 .kpi {
   background: var(--surface); border: 1px solid var(--border);
-  border-radius: 10px; padding: 16px 18px;                           
+  border-radius: 10px; padding: 16px 18px;
   transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
 }
 .kpi:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(3,102,165,0.10); border-color: var(--b3); }
@@ -406,6 +406,9 @@ tbody tr:last-child td { border-bottom: none; }
 </style>
 </head>
 <body>
+
+<!-- Firebase DB Loading Overlay -->
+<div id="db-loader" style="display:flex;position:fixed;inset:0;z-index:9999;background:rgba(245,248,251,0.95);flex-direction:column;align-items:center;justify-content:center;gap:16px"><div style="width:48px;height:48px;border:4px solid #cdd8e4;border-top-color:#0366a5;border-radius:50%;animation:spin 0.8s linear infinite"></div><div style="font-family:Barlow,sans-serif;font-weight:700;color:#0366a5;font-size:1rem;letter-spacing:1px">Conectando ao banco de dados...</div><div style="font-family:IBM Plex Mono,monospace;font-size:0.72rem;color:#556678">Firebase · Firestore</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style></div>
 
 <!-- HEADER -->
 <header class="header">
@@ -807,6 +810,36 @@ tbody tr:last-child td { border-bottom: none; }
 
 <div class="toast" id="toast"></div>
 
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDIBpSGIbaaybjvMkMd4kQl6LXT316DABs",
+    authDomain: "aqua-2-9245d.firebaseapp.com",
+    projectId: "aqua-2-9245d",
+    storageBucket: "aqua-2-9245d.firebasestorage.app",
+    messagingSenderId: "639428434750",
+    appId: "1:639428434750:web:441197ff196cc1fb1e2a6f"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Expose db and Firebase functions globally so the main script can use them
+  window._db = db;
+  window._fbDoc = doc;
+  window._fbGetDoc = getDoc;
+  window._fbSetDoc = setDoc;
+  window._fbOnSnapshot = onSnapshot;
+
+  // Wait for main script to be ready, then initialize Firebase sync
+  window.addEventListener('load', () => {
+    window.initFirebase && window.initFirebase();
+  });
+</script>
+
 <script>
 // ══════════════════════════════════════════════
 //  DATA & STATE
@@ -829,29 +862,96 @@ const SEED_BASE = {
   Estanho: { Rotativo: 0.000272802494, Amarrado: 0.000272802494, hist: [{date:'2024-01-01',val:0.000240},{date:'2024-06-01',val:0.000255},{date:'2025-01-01',val:0.000265},{date:'2025-06-01',val:0.000272802494}] }
 };
 
-// ── LOAD / SAVE STATE ──
-function loadState() {
-  try {
-    const raw = window.storage && window.storage.get ? null : null; // will use localStorage fallback pattern
-    const saved = sessionStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch(e) {}
-  return null;
-}
-function saveState() {
-  try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({products: STATE.products, base: STATE.base, custoProcesso: STATE.custoProcesso})); } catch(e) {}
-}
-
-const saved = loadState();
+// ── FIREBASE LOAD / SAVE STATE ──
 const STATE = {
-  products: saved ? saved.products : SEED_PRODUCTS.map(p => ({...p, hist: p.hist || []})),
-  base:     saved ? saved.base     : JSON.parse(JSON.stringify(SEED_BASE)),
-  custoProcesso: saved ? saved.custoProcesso : 170,
-  // UI state
+  products: SEED_PRODUCTS.map(p => ({...p, hist: p.hist || []})),
+  base:     JSON.parse(JSON.stringify(SEED_BASE)),
+  custoProcesso: 170,
   sortKey: 'material', sortDir: 1,
   filterMat: new Set(), filterProc: new Set(),
   search: '', page: 1, PAGE_SIZE: 20,
   imgData: null
+};
+
+let _fbReady = false;
+let _saveTimeout = null;
+
+function saveState() {
+  if (!_fbReady) return;
+  // Debounce saves to avoid hammering Firestore
+  clearTimeout(_saveTimeout);
+  _saveTimeout = setTimeout(async () => {
+    try {
+      const payload = {
+        products: STATE.products,
+        base: STATE.base,
+        custoProcesso: STATE.custoProcesso,
+        updatedAt: new Date().toISOString()
+      };
+      const ref = window._fbDoc(window._db, 'app', 'state');
+      await window._fbSetDoc(ref, payload);
+    } catch(e) {
+      console.error('Firebase save error:', e);
+      toast('⚠️ Erro ao salvar no banco de dados', 'error');
+    }
+  }, 600);
+}
+
+// Show a loading overlay while Firebase loads
+function showDBLoader() {
+  const el = document.getElementById('db-loader');
+  if (el) el.style.display = 'flex';
+}
+function hideDBLoader() {
+  const el = document.getElementById('db-loader');
+  if (el) el.style.display = 'none';
+}
+
+// Called by the Firebase module after it initializes
+window.initFirebase = async function() {
+  showDBLoader();
+  try {
+    const ref = window._fbDoc(window._db, 'app', 'state');
+
+    // Load initial data
+    const snap = await window._fbGetDoc(ref);
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.products) STATE.products = data.products;
+      if (data.base)     STATE.base     = data.base;
+      if (data.custoProcesso) STATE.custoProcesso = data.custoProcesso;
+    }
+
+    _fbReady = true;
+    hideDBLoader();
+    renderDashboard();
+    renderTable();
+    simRenderItems();
+    document.getElementById('hdr-badge').textContent = STATE.products.length + ' peças';
+
+    // Listen for real-time updates from other users
+    window._fbOnSnapshot(ref, (docSnap) => {
+      if (!docSnap.exists()) return;
+      const data = docSnap.data();
+      if (!data.updatedAt) return;
+      // Only update if change came from another session
+      if (data.products) STATE.products = data.products;
+      if (data.base)     STATE.base     = data.base;
+      if (data.custoProcesso) STATE.custoProcesso = data.custoProcesso;
+      renderDashboard();
+      renderTable();
+      document.getElementById('hdr-badge').textContent = STATE.products.length + ' peças';
+    });
+
+  } catch(e) {
+    console.error('Firebase init error:', e);
+    hideDBLoader();
+    toast('⚠️ Erro ao conectar ao banco de dados. Verifique sua conexão.', 'error');
+    _fbReady = true; // allow local use as fallback
+    renderDashboard();
+    renderTable();
+    simRenderItems();
+  }
 };
 
 // ── HELPERS ──
@@ -1716,26 +1816,21 @@ function cadLimpar() {
 }
 
 // ══════════════════════════════════════════════
-//  INIT
+//  INIT — Firebase handles initial render
 // ══════════════════════════════════════════════
-renderDashboard();
-renderTable();
-simRenderItems();
-</script>
-<script>
-const scriptURL = "https://script.google.com/macros/s/AKfycbyMAeV_z-HUKltheI8GsoHCXpVifC3FCNvCzjpmQRRnH3uE3TKSFCRe6-RUI-dnBo9bhw/exec"
-const form = document.getElementById('form')
-
-form.addEventListener('submit', e => {
-  e.preventDefault()
-
-  fetch(scriptURL, {
-    method: 'POST',
-    body: new FormData(form)
-  })
-  .then(response => alert("Saved to Google Sheets"))
-  .catch(error => alert("Error"))
-})
+// initFirebase() is called from the Firebase module after load
+// If Firebase module fails to load, fallback render:
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    if (!_fbReady) {
+      _fbReady = true;
+      hideDBLoader();
+      renderDashboard();
+      renderTable();
+      simRenderItems();
+    }
+  }, 5000);
+});
 </script>
 </body>
 </html>
