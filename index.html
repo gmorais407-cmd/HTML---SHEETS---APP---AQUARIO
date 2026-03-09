@@ -404,11 +404,20 @@ tbody tr:last-child td { border-bottom: none; }
   .base-fields { grid-template-columns: 1fr; }
 }
 </style>
+
+<!-- Firebase CDN -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-<!-- Firebase DB Loading Overlay -->
-<div id="db-loader" style="display:flex;position:fixed;inset:0;z-index:9999;background:rgba(245,248,251,0.95);flex-direction:column;align-items:center;justify-content:center;gap:16px"><div style="width:48px;height:48px;border:4px solid #cdd8e4;border-top-color:#0366a5;border-radius:50%;animation:spin 0.8s linear infinite"></div><div style="font-family:Barlow,sans-serif;font-weight:700;color:#0366a5;font-size:1rem;letter-spacing:1px">Conectando ao banco de dados...</div><div style="font-family:IBM Plex Mono,monospace;font-size:0.72rem;color:#556678">Firebase · Firestore</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style></div>
+<!-- DB Loading Overlay -->
+<div id="db-loader" style="display:flex;position:fixed;inset:0;z-index:9999;background:rgba(245,248,251,0.97);flex-direction:column;align-items:center;justify-content:center;gap:16px">
+  <div style="width:48px;height:48px;border:4px solid #cdd8e4;border-top-color:#0366a5;border-radius:50%;animation:_spin 0.8s linear infinite"></div>
+  <div style="font-family:'Barlow',sans-serif;font-weight:700;color:#0366a5;font-size:1rem;letter-spacing:1px">Conectando ao banco de dados...</div>
+  <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:#556678">Firebase · Firestore</div>
+  <style>@keyframes _spin{to{transform:rotate(360deg)}}</style>
+</div>
 
 <!-- HEADER -->
 <header class="header">
@@ -810,36 +819,6 @@ tbody tr:last-child td { border-bottom: none; }
 
 <div class="toast" id="toast"></div>
 
-<!-- Firebase SDK -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-  import { getFirestore, doc, getDoc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyDIBpSGIbaaybjvMkMd4kQl6LXT316DABs",
-    authDomain: "aqua-2-9245d.firebaseapp.com",
-    projectId: "aqua-2-9245d",
-    storageBucket: "aqua-2-9245d.firebasestorage.app",
-    messagingSenderId: "639428434750",
-    appId: "1:639428434750:web:441197ff196cc1fb1e2a6f"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  // Expose db and Firebase functions globally so the main script can use them
-  window._db = db;
-  window._fbDoc = doc;
-  window._fbGetDoc = getDoc;
-  window._fbSetDoc = setDoc;
-  window._fbOnSnapshot = onSnapshot;
-
-  // Wait for main script to be ready, then initialize Firebase sync
-  window.addEventListener('load', () => {
-    window.initFirebase && window.initFirebase();
-  });
-</script>
-
 <script>
 // ══════════════════════════════════════════════
 //  DATA & STATE
@@ -862,7 +841,19 @@ const SEED_BASE = {
   Estanho: { Rotativo: 0.000272802494, Amarrado: 0.000272802494, hist: [{date:'2024-01-01',val:0.000240},{date:'2024-06-01',val:0.000255},{date:'2025-01-01',val:0.000265},{date:'2025-06-01',val:0.000272802494}] }
 };
 
-// ── FIREBASE LOAD / SAVE STATE ──
+// ── FIREBASE SETUP ──
+const firebaseConfig = {
+  apiKey: "AIzaSyDIBpSGIbaaybjvMkMd4kQl6LXT316DABs",
+  authDomain: "aqua-2-9245d.firebaseapp.com",
+  projectId: "aqua-2-9245d",
+  storageBucket: "aqua-2-9245d.firebasestorage.app",
+  messagingSenderId: "639428434750",
+  appId: "1:639428434750:web:441197ff196cc1fb1e2a6f"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const DOC_REF = db.collection('app').doc('state');
+
 const STATE = {
   products: SEED_PRODUCTS.map(p => ({...p, hist: p.hist || []})),
   base:     JSON.parse(JSON.stringify(SEED_BASE)),
@@ -873,86 +864,21 @@ const STATE = {
   imgData: null
 };
 
-let _fbReady = false;
-let _saveTimeout = null;
-
+let _saveTimer = null;
 function saveState() {
-  if (!_fbReady) return;
-  // Debounce saves to avoid hammering Firestore
-  clearTimeout(_saveTimeout);
-  _saveTimeout = setTimeout(async () => {
-    try {
-      const payload = {
-        products: STATE.products,
-        base: STATE.base,
-        custoProcesso: STATE.custoProcesso,
-        updatedAt: new Date().toISOString()
-      };
-      const ref = window._fbDoc(window._db, 'app', 'state');
-      await window._fbSetDoc(ref, payload);
-    } catch(e) {
-      console.error('Firebase save error:', e);
-      toast('⚠️ Erro ao salvar no banco de dados', 'error');
-    }
-  }, 600);
-}
-
-// Show a loading overlay while Firebase loads
-function showDBLoader() {
-  const el = document.getElementById('db-loader');
-  if (el) el.style.display = 'flex';
-}
-function hideDBLoader() {
-  const el = document.getElementById('db-loader');
-  if (el) el.style.display = 'none';
-}
-
-// Called by the Firebase module after it initializes
-window.initFirebase = async function() {
-  showDBLoader();
-  try {
-    const ref = window._fbDoc(window._db, 'app', 'state');
-
-    // Load initial data
-    const snap = await window._fbGetDoc(ref);
-    if (snap.exists()) {
-      const data = snap.data();
-      if (data.products) STATE.products = data.products;
-      if (data.base)     STATE.base     = data.base;
-      if (data.custoProcesso) STATE.custoProcesso = data.custoProcesso;
-    }
-
-    _fbReady = true;
-    hideDBLoader();
-    renderDashboard();
-    renderTable();
-    simRenderItems();
-    document.getElementById('hdr-badge').textContent = STATE.products.length + ' peças';
-
-    // Listen for real-time updates from other users
-    window._fbOnSnapshot(ref, (docSnap) => {
-      if (!docSnap.exists()) return;
-      const data = docSnap.data();
-      if (!data.updatedAt) return;
-      // Only update if change came from another session
-      if (data.products) STATE.products = data.products;
-      if (data.base)     STATE.base     = data.base;
-      if (data.custoProcesso) STATE.custoProcesso = data.custoProcesso;
-      renderDashboard();
-      renderTable();
-      document.getElementById('hdr-badge').textContent = STATE.products.length + ' peças';
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    DOC_REF.set({
+      products: STATE.products,
+      base: STATE.base,
+      custoProcesso: STATE.custoProcesso,
+      updatedAt: new Date().toISOString()
+    }).catch(e => {
+      console.error('Save error:', e);
+      toast('⚠️ Erro ao salvar. Verifique sua conexão.', 'error');
     });
-
-  } catch(e) {
-    console.error('Firebase init error:', e);
-    hideDBLoader();
-    toast('⚠️ Erro ao conectar ao banco de dados. Verifique sua conexão.', 'error');
-    _fbReady = true; // allow local use as fallback
-    renderDashboard();
-    renderTable();
-    simRenderItems();
-  }
-};
+  }, 500);
+}
 
 // ── HELPERS ──
 const pct = (a,b) => a>0 ? ((b-a)/a*100) : null;
@@ -1816,21 +1742,41 @@ function cadLimpar() {
 }
 
 // ══════════════════════════════════════════════
-//  INIT — Firebase handles initial render
+//  INIT — Load from Firebase then render
 // ══════════════════════════════════════════════
-// initFirebase() is called from the Firebase module after load
-// If Firebase module fails to load, fallback render:
-window.addEventListener('load', () => {
-  setTimeout(() => {
-    if (!_fbReady) {
-      _fbReady = true;
-      hideDBLoader();
-      renderDashboard();
-      renderTable();
-      simRenderItems();
+(async function initApp() {
+  try {
+    const snap = await DOC_REF.get();
+    if (snap.exists) {
+      const data = snap.data();
+      if (data.products && data.products.length) STATE.products = data.products;
+      if (data.base)            STATE.base = data.base;
+      if (data.custoProcesso)   STATE.custoProcesso = data.custoProcesso;
     }
-  }, 5000);
-});
+  } catch(e) {
+    console.error('Firebase load error:', e);
+  }
+
+  // Hide loader and render app
+  document.getElementById('db-loader').style.display = 'none';
+  document.getElementById('hdr-badge').textContent = STATE.products.length + ' peças';
+  renderDashboard();
+  renderTable();
+  simRenderItems();
+
+  // Listen for real-time changes from other users
+  DOC_REF.onSnapshot(snap => {
+    if (!snap.exists) return;
+    const data = snap.data();
+    if (!data.updatedAt) return;
+    if (data.products) STATE.products = data.products;
+    if (data.base)     STATE.base     = data.base;
+    if (data.custoProcesso) STATE.custoProcesso = data.custoProcesso;
+    document.getElementById('hdr-badge').textContent = STATE.products.length + ' peças';
+    renderDashboard();
+    renderTable();
+  });
+})();
 </script>
 </body>
 </html>
