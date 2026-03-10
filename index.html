@@ -838,34 +838,35 @@ canvas#donutCanvas { cursor: pointer; }
 <!-- ══════════ DASHBOARD ══════════ -->
 <div id="page-dashboard" class="page active">
   <div class="sec-head">
-    <div><div class="sec-title">Dashboard <span>Geral</span></div>
-    <div class="sec-sub">Visão consolidada de todos os banhos</div></div>
+    <div><div class="sec-title">Dashboard <span>de Fichas</span></div>
+    <div class="sec-sub">Visão de fichas em progresso, concluídas e gastos (base ERP)</div></div>
   </div>
+  <div id="dashboard-empty-hint" style="display:none;background:var(--surface);border:1px dashed var(--border);border-radius:10px;padding:12px 14px;margin-bottom:12px;color:var(--text2);font-size:0.8rem">📡 Sem fichas vinculadas no momento. Aguardando integração com ERP para preencher os indicadores automaticamente.</div>
   <div class="kpi-grid" id="kpi-grid"></div>
   <div class="charts-row">
     <div class="chart-card">
-      <div class="chart-title">Por Material</div>
+      <div class="chart-title">Fichas por Status</div>
       <div class="donut-wrap">
         <canvas id="donutCanvas" width="180" height="180"></canvas>
         <div class="donut-legend" id="donut-legend"></div>
       </div>
     </div>
     <div class="chart-card">
-      <div class="chart-title">Top 10 — Forecast 30 dias (un.)</div>
+      <div class="chart-title">Top 10 — Fichas em Progresso (gasto realizado)</div>
       <div class="bar-list" id="top-forecast-bars"></div>
     </div>
     <div class="chart-card">
-      <div class="chart-title">Valor Total Forecast 30d por Material</div>
+      <div class="chart-title">Gasto por Status</div>
       <div class="bar-list" id="val-mat-bars"></div>
     </div>
   </div>
   <div class="hist-row" style="grid-template-columns:1fr 1fr">
     <div class="history-chart">
-      <div class="chart-title">Distribuição de Peças por Material</div>
+      <div class="chart-title">Distribuição de Gastos por Cliente</div>
       <div id="chart-mat-dist" style="margin-top:10px"></div>
     </div>
     <div class="history-chart">
-      <div class="chart-title">Última Taxa Registrada por Material (R$/mm²)</div>
+      <div class="chart-title">Última Atualização por Status</div>
       <div id="chart-taxa-atual" style="margin-top:10px"></div>
     </div>
   </div>
@@ -1593,6 +1594,9 @@ const SEED_BASE = {
   Estanho: { Rotativo: 0.000272802494, Amarrado: 0.000272802494, hist: [{date:'2024-01-01',val:0.000240},{date:'2024-06-01',val:0.000255},{date:'2025-01-01',val:0.000265},{date:'2025-06-01',val:0.000272802494}] }
 };
 
+const SEED_FICHAS = [];
+
+
 // ── FIREBASE SETUP ──
 const firebaseConfig = {
   apiKey: "AIzaSyDIBpSGIbaaybjvMkMd4kQl6LXT316DABs",
@@ -1609,6 +1613,7 @@ const DOC_REF = db.collection('app').doc('state');
 const STATE = {
   products: SEED_PRODUCTS.map(p => ({...p, hist: p.hist || []})),
   base:     JSON.parse(JSON.stringify(SEED_BASE)),
+  fichas:   JSON.parse(JSON.stringify(SEED_FICHAS)),
   custoProcesso: 170,
   sortKey: 'material', sortDir: 1,
   filterMat: new Set(), filterProc: new Set(),
@@ -1623,6 +1628,7 @@ function saveState() {
     DOC_REF.set({
       products: STATE.products,
       base: STATE.base,
+      fichas: STATE.fichas,
       custoProcesso: STATE.custoProcesso,
       updatedAt: new Date().toISOString()
     }).catch(e => {
@@ -1712,6 +1718,17 @@ document.addEventListener('click', e => {
   }
 });
 
+function updateHeaderBadge(page) {
+  const activePage = page || document.querySelector('.page.active')?.id?.replace('page-','') || 'dashboard';
+  const badge = document.getElementById('hdr-badge');
+  if (!badge) return;
+  if (activePage === 'dashboard') {
+    badge.textContent = `${(STATE.fichas || []).length} fichas`;
+    return;
+  }
+  badge.textContent = `${STATE.products.length} peças`;
+}
+
 function nav(page, btn) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -1725,52 +1742,61 @@ function nav(page, btn) {
   if(page==='simulador') simRenderItems();
   if(page==='cadastro')  cadPreview();
   if(page==='evolutize') evoRender();
+  updateHeaderBadge(page);
 }
 
 // ══════════════════════════════════════════════
 //  DASHBOARD
 // ══════════════════════════════════════════════
 function renderDashboard() {
-  const P = STATE.products;
-  const totalFcVal = P.reduce((s,p)=>s+p.forecast30*p.custo_atual,0);
-  const totalFc    = P.reduce((s,p)=>s+p.forecast30,0);
-  const mats = ['Niquel','Ouro','Cromo','Estanho'];
-  const matVals = mats.map(m=>P.filter(p=>p.material===m).reduce((s,p)=>s+p.forecast30*p.custo_atual,0));
-  const maxMV = Math.max(...matVals);
+  const fichas = STATE.fichas || [];
+  const statusMeta = [
+    { key: 'em_progresso', label: 'Em Progresso', color: '#f59e0b' },
+    { key: 'concluida', label: 'Concluídas', color: '#10b981' }
+  ];
 
-  // KPIs
+  const totalFichas = fichas.length;
+  const emptyHint = document.getElementById('dashboard-empty-hint');
+  if (emptyHint) emptyHint.style.display = totalFichas ? 'none' : 'block';
+  const totalPrevisto = fichas.reduce((s,f)=>s+(f.valorPrevisto||0),0);
+  const totalRealizado = fichas.reduce((s,f)=>s+(f.valorRealizado||0),0);
+  const totalEmProgresso = fichas.filter(f=>f.status==='em_progresso').length;
+  const totalConcluidas = fichas.filter(f=>f.status==='concluida').length;
+
+  const gastoPorStatus = statusMeta.map(st =>
+    fichas.filter(f=>f.status===st.key).reduce((s,f)=>s+(f.valorRealizado||0),0)
+  );
+  const maxGastoStatus = Math.max(...gastoPorStatus, 1);
+
   document.getElementById('kpi-grid').innerHTML = `
-    <div class="kpi"><div class="kpi-label">Total de Peças</div><div class="kpi-val">${P.length}</div><div class="kpi-sub">cadastradas</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:var(--accent)"></div></div></div>
-    <div class="kpi"><div class="kpi-label">Forecast 30d</div><div class="kpi-val" style="color:var(--blue)">${totalFc.toLocaleString('pt-BR')}</div><div class="kpi-sub">unidades previstas</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:var(--blue)"></div></div></div>
-    <div class="kpi"><div class="kpi-label">Valor Forecast</div><div class="kpi-val" style="color:var(--accent);font-size:1.2rem">${BRL(totalFcVal)}</div><div class="kpi-sub">custo atual × forecast</div></div>
-    ${mats.map((m,i)=>`<div class="kpi"><div class="kpi-label">${m}</div><div class="kpi-val" style="color:${COLORS[m]};font-size:1.3rem">${BRL(matVals[i])}</div><div class="kpi-sub">${P.filter(p=>p.material===m).length} peças · forecast</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${maxMV>0?(matVals[i]/maxMV*100):0}%;background:${COLORS[m]}"></div></div></div>`).join('')}
+    <div class="kpi"><div class="kpi-label">Total de Fichas</div><div class="kpi-val">${totalFichas}</div><div class="kpi-sub">originadas do ERP</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:var(--accent)"></div></div></div>
+    <div class="kpi"><div class="kpi-label">Fichas em Progresso</div><div class="kpi-val" style="color:#f59e0b">${totalEmProgresso}</div><div class="kpi-sub">com execução aberta</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${totalFichas?((totalEmProgresso/totalFichas)*100):0}%;background:#f59e0b"></div></div></div>
+    <div class="kpi"><div class="kpi-label">Fichas Concluídas</div><div class="kpi-val" style="color:#10b981">${totalConcluidas}</div><div class="kpi-sub">finalizadas</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${totalFichas?((totalConcluidas/totalFichas)*100):0}%;background:#10b981"></div></div></div>
+    <div class="kpi"><div class="kpi-label">Gasto Previsto</div><div class="kpi-val" style="color:var(--blue);font-size:1.2rem">${BRL(totalPrevisto)}</div><div class="kpi-sub">somatório das fichas</div></div>
+    <div class="kpi"><div class="kpi-label">Gasto Realizado</div><div class="kpi-val" style="color:var(--accent);font-size:1.2rem">${BRL(totalRealizado)}</div><div class="kpi-sub">valor já apontado</div></div>
   `;
-  document.getElementById('hdr-badge').textContent = P.length + ' peças';
+  updateHeaderBadge('dashboard');
 
-  // Donut — interactive
   const canvas = document.getElementById('donutCanvas');
   const ctx = canvas.getContext('2d');
   const cx = 90, cy = 90, R = 78, r = 42;
-  const counts = mats.map(m=>P.filter(p=>p.material===m).length);
+  const counts = statusMeta.map(st=>fichas.filter(f=>f.status===st.key).length);
   const total = counts.reduce((a,b)=>a+b,0)||1;
   let _donutAngles = [];
   ctx.clearRect(0,0,180,180);
   let ang = -Math.PI/2;
-  mats.forEach((m,i)=>{
+  statusMeta.forEach((st,i)=>{
     const sl = (counts[i]/total)*2*Math.PI;
-    _donutAngles.push({start:ang, end:ang+sl, mat:m, count:counts[i], pct:(counts[i]/total*100)});
+    _donutAngles.push({start:ang, end:ang+sl, label:st.label, count:counts[i], pct:(counts[i]/total*100)});
     ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,ang,ang+sl); ctx.closePath();
-    ctx.fillStyle = COLORS[m]; ctx.fill(); ang += sl;
+    ctx.fillStyle = st.color; ctx.fill(); ang += sl;
   });
-  // hole
   ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.fillStyle='#fff'; ctx.fill();
-  // center text
   ctx.fillStyle='#0f1e2e'; ctx.font='bold 18px Barlow,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText(total, cx, cy-7);
+  ctx.fillText(totalFichas, cx, cy-7);
   ctx.font='10px Barlow,sans-serif'; ctx.fillStyle='#556678';
-  ctx.fillText('peças', cx, cy+9);
+  ctx.fillText('fichas', cx, cy+9);
 
-  // Donut tooltip on hover
   canvas.onmousemove = function(e) {
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left - cx, my = e.clientY - rect.top - cy;
@@ -1779,114 +1805,104 @@ function renderDashboard() {
     const angle = Math.atan2(my, mx);
     const normAngle = angle < -Math.PI/2 ? angle + 2*Math.PI : angle;
     const seg = _donutAngles.find(s => normAngle >= s.start && normAngle < s.end);
-    if (seg) showTip(`<b>${seg.mat}</b><br>${seg.count} peças &nbsp;·&nbsp; ${seg.pct.toFixed(1)}%`, e.clientX, e.clientY);
+    if (seg) showTip(`<b>${seg.label}</b><br>${seg.count} fichas &nbsp;·&nbsp; ${seg.pct.toFixed(1)}%`, e.clientX, e.clientY);
     else showTip(null);
   };
   canvas.onmouseleave = () => showTip(null);
 
-  document.getElementById('donut-legend').innerHTML = mats.map((m,i)=>{
+  document.getElementById('donut-legend').innerHTML = statusMeta.map((st,i)=>{
     const pctVal = total > 0 ? (counts[i]/total*100).toFixed(1) : '0.0';
-    return `<div class="leg-row"><div class="leg-label"><div class="leg-dot" style="background:${COLORS[m]}"></div>${m}</div><div class="leg-val">${counts[i]} <span style="color:var(--text2);font-size:0.65rem">(${pctVal}%)</span></div></div>`;
+    return `<div class="leg-row"><div class="leg-label"><div class="leg-dot" style="background:${st.color}"></div>${st.label}</div><div class="leg-val">${counts[i]} <span style="color:var(--text2);font-size:0.65rem">(${pctVal}%)</span></div></div>`;
   }).join('');
 
-  // Top forecast bars — interactive
-  const topF = [...P].sort((a,b)=>b.forecast30-a.forecast30).slice(0,10);
-  const maxF = topF[0]?.forecast30||1;
-  document.getElementById('top-forecast-bars').innerHTML = topF.map(p=>{
-    const pctW = (p.forecast30/maxF*100).toFixed(1);
-    return `<div class="bar-row" onmouseenter="showTip('<b>${p.cod}</b><br>${p.desc}<br>${p.forecast30.toLocaleString('pt-BR')} un. &nbsp;·&nbsp; ${pctW}% do máx',event.clientX,event.clientY)" onmouseleave="showTip(null)">
-      <div class="bar-lbl mono" title="${p.desc}">${p.cod}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${pctW}%;background:${COLORS[p.material]}"></div></div>
-      <div class="bar-num">${p.forecast30.toLocaleString('pt-BR')}</div>
+  const topF = [...fichas].filter(f=>f.status==='em_progresso').sort((a,b)=>(b.valorRealizado||0)-(a.valorRealizado||0)).slice(0,10);
+  const maxF = topF[0]?.valorRealizado||1;
+  document.getElementById('top-forecast-bars').innerHTML = topF.map(f=>{
+    const pctW = ((f.valorRealizado||0)/maxF*100).toFixed(1);
+    return `<div class="bar-row" onmouseenter="showTip('<b>${f.id}</b><br>${f.cliente}<br>${BRL(f.valorRealizado||0)} &nbsp;·&nbsp; ${pctW}% do máx',event.clientX,event.clientY)" onmouseleave="showTip(null)">
+      <div class="bar-lbl mono" title="${f.cliente}">${f.id}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pctW}%;background:#f59e0b"></div></div>
+      <div class="bar-num">${BRL(f.valorRealizado||0)}</div>
+    </div>`;
+  }).join('') || '<div style="color:var(--text2);font-size:0.82rem">Sem fichas em progresso no momento.</div>';
+
+  document.getElementById('val-mat-bars').innerHTML = statusMeta.map((st,i)=>{
+    const pctW = (gastoPorStatus[i]/maxGastoStatus*100).toFixed(1);
+    return `<div class="bar-row" onmouseenter="showTip('<b>${st.label}</b><br>${BRL(gastoPorStatus[i])}<br>${pctW}% do maior status',event.clientX,event.clientY)" onmouseleave="showTip(null)">
+      <div class="bar-lbl">${st.label}</div>
+      <div class="bar-track"><div class="bar-fill" style="width:${pctW}%;background:${st.color}"></div></div>
+      <div class="bar-num">${BRL(gastoPorStatus[i])}</div>
     </div>`;
   }).join('');
 
-  // Val by mat bars — interactive
-  const maxV = Math.max(...matVals)||1;
-  document.getElementById('val-mat-bars').innerHTML = mats.map((m,i)=>{
-    const pctW = (matVals[i]/maxV*100).toFixed(1);
-    return `<div class="bar-row" onmouseenter="showTip('<b>${m}</b><br>${BRL(matVals[i])}<br>${pctW}% do total',event.clientX,event.clientY)" onmouseleave="showTip(null)">
-      <div class="bar-lbl">${m}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${pctW}%;background:${COLORS[m]}"></div></div>
-      <div class="bar-num">${BRL(matVals[i])}</div>
-    </div>`;
-  }).join('');
-
-  // New charts
-  renderMatDistChart(P, mats, counts, total);
-  renderTaxaAtualChart(mats);
+  renderMatDistChart(fichas);
+  renderTaxaAtualChart(statusMeta, fichas);
 }
 
-// ── CHART: Material Distribution (horizontal bar) ──
-function renderMatDistChart(P, mats, counts, total) {
+// ── CHART: Distribuição de gastos por cliente ──
+function renderMatDistChart(fichas) {
   const el = document.getElementById('chart-mat-dist');
   if (!el) return;
-  const maxC = Math.max(...counts) || 1;
-  el.innerHTML = mats.map((m, i) => {
-    const pct = total > 0 ? (counts[i]/total*100).toFixed(1) : '0.0';
-    const w = (counts[i]/maxC*100).toFixed(1);
-    const proc = ['Rotativo','Amarrado'].map(pr => {
-      const n = P.filter(p => p.material===m && p.processo===pr).length;
-      return n > 0 ? `${pr}: ${n}` : null;
-    }).filter(Boolean).join(' · ');
-    return `<div class="bar-row" style="margin-bottom:10px"
-      onmouseenter="showTip('<b>${m}</b><br>${counts[i]} peças &nbsp;·&nbsp; ${pct}% do total<br><span style=color:#aec0d0>${proc}</span>',event.clientX,event.clientY)"
-      onmouseleave="showTip(null)">
-      <div class="bar-lbl" style="width:72px;font-weight:700;color:${COLORS[m]}">${m}</div>
+
+  const byCliente = {};
+  fichas.forEach(f => {
+    const key = f.cliente || 'Sem cliente';
+    byCliente[key] = (byCliente[key] || 0) + (f.valorRealizado || 0);
+  });
+
+  const rows = Object.entries(byCliente)
+    .map(([cliente, valor]) => ({ cliente, valor }))
+    .sort((a,b)=>b.valor-a.valor)
+    .slice(0, 8);
+
+  if (!rows.length) {
+    el.innerHTML = '<div style="color:var(--text2);font-size:0.82rem">Sem gastos de fichas para exibir.</div>';
+    return;
+  }
+
+  const max = Math.max(...rows.map(r=>r.valor), 1);
+  el.innerHTML = rows.map(r => {
+    const w = (r.valor/max*100).toFixed(1);
+    return `<div class="bar-row" style="margin-bottom:10px" onmouseenter="showTip('<b>${r.cliente}</b><br>Gasto acumulado: ${BRL(r.valor)}',event.clientX,event.clientY)" onmouseleave="showTip(null)">
+      <div class="bar-lbl" style="width:132px;font-weight:700">${r.cliente}</div>
       <div class="bar-track" style="height:18px;border-radius:4px">
-        <div class="bar-fill" style="width:${w}%;background:${COLORS[m]};height:100%;border-radius:4px;transition:width 0.8s cubic-bezier(.4,0,.2,1)"></div>
+        <div class="bar-fill" style="width:${w}%;background:var(--blue);height:100%;border-radius:4px;transition:width 0.8s cubic-bezier(.4,0,.2,1)"></div>
       </div>
-      <div style="min-width:90px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--text2)">
-        <span style="font-weight:700;color:${COLORS[m]}">${counts[i]}</span> peças &nbsp;<span style="opacity:.6">${pct}%</span>
-      </div>
+      <div style="min-width:110px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--text2)">${BRL(r.valor)}</div>
     </div>`;
   }).join('');
 }
 
-// ── CHART: Última taxa por material (grouped bar) ──
-function renderTaxaAtualChart(mats) {
+// ── CHART: Última atualização por status ──
+function renderTaxaAtualChart(statusMeta, fichas) {
   const el = document.getElementById('chart-taxa-atual');
   if (!el) return;
-  const procs = ['Rotativo','Amarrado'];
-  const procColors = { Rotativo: '#0366a5', Amarrado: '#3eac48' };
 
-  // Build rows: one per material, with two bars (Rotativo / Amarrado)
-  let rows = [];
-  mats.forEach(m => {
-    procs.forEach(pr => {
-      const taxa = STATE.base[m]?.[pr];
-      if (taxa === null || taxa === undefined) return;
-      rows.push({ mat: m, proc: pr, taxa });
-    });
+  const rows = statusMeta.map(st => {
+    const lista = fichas.filter(f=>f.status===st.key);
+    const total = lista.reduce((s,f)=>s+(f.valorRealizado||0),0);
+    const ultima = lista
+      .map(f=>f.atualizadaEm)
+      .filter(Boolean)
+      .sort()
+      .slice(-1)[0] || '—';
+    return { label: st.label, color: st.color, total, ultima, qtd: lista.length };
   });
 
-  const maxT = Math.max(...rows.map(r => r.taxa)) || 1;
-
+  const max = Math.max(...rows.map(r=>r.total), 1);
   el.innerHTML = rows.map(r => {
-    const w = (r.taxa / maxT * 100).toFixed(1);
-    const hist = STATE.base[r.mat]?.hist?.filter(h => h.motivo?.includes(r.proc)) || [];
-    const lastDate = hist.length ? fmtDate(hist[hist.length-1].date) : '—';
-    return `<div class="bar-row" style="margin-bottom:8px"
-      onmouseenter="showTip('<b>${r.mat} · ${r.proc}</b><br>Taxa: <b>${r.taxa.toExponential(4)} R$/mm²</b><br>Última atualização: ${lastDate}',event.clientX,event.clientY)"
-      onmouseleave="showTip(null)">
-      <div style="width:108px;font-size:0.7rem;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-        <span style="font-weight:700;color:${COLORS[r.mat]}">${r.mat}</span>
-        <span style="opacity:.7"> · ${r.proc}</span>
-      </div>
+    const w = (r.total/max*100).toFixed(1);
+    return `<div class="bar-row" style="margin-bottom:8px" onmouseenter="showTip('<b>${r.label}</b><br>Fichas: ${r.qtd}<br>Gasto: ${BRL(r.total)}<br>Última atualização: ${r.ultima}',event.clientX,event.clientY)" onmouseleave="showTip(null)">
+      <div style="width:108px;font-size:0.7rem;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="font-weight:700;color:${r.color}">${r.label}</span></div>
       <div class="bar-track" style="height:14px;border-radius:3px">
-        <div class="bar-fill" style="width:${w}%;height:100%;border-radius:3px;background:${procColors[r.proc]};opacity:${r.proc==='Amarrado'?'0.7':'1'};transition:width 0.8s cubic-bezier(.4,0,.2,1)"></div>
+        <div class="bar-fill" style="width:${w}%;height:100%;border-radius:3px;background:${r.color};transition:width 0.8s cubic-bezier(.4,0,.2,1)"></div>
       </div>
-      <div style="min-width:100px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--text2)">
-        ${r.taxa.toExponential(3)}
-      </div>
+      <div style="min-width:120px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--text2)">${r.ultima==='—' ? '—' : r.ultima}</div>
     </div>`;
   }).join('');
 
-  // Legend
-  el.innerHTML += `<div style="display:flex;gap:14px;margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
-    ${procs.map(pr => `<div style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:var(--text2)">
-      <div style="width:10px;height:10px;border-radius:2px;background:${procColors[pr]};opacity:${pr==='Amarrado'?'0.7':'1'}"></div>${pr}
-    </div>`).join('')}
+  el.innerHTML += `<div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap">
+    ${rows.map(r=>`<div style="display:flex;align-items:center;gap:6px;font-size:0.7rem;color:var(--text2)"><span style="width:10px;height:10px;border-radius:50%;background:${r.color};display:inline-block"></span>${r.label}</div>`).join('')}
   </div>`;
 }
 
@@ -2687,7 +2703,7 @@ function cadSalvar() {
   logActivity('create', '➕ Peça cadastrada', `Código: ${cod} — ${desc} (${mat} · ${proc})`, currentUser?.label);
   toast(`✓ Peça ${cod} cadastrada com sucesso!`,'success');
   cadLimpar();
-  document.getElementById('hdr-badge').textContent = STATE.products.length + ' peças';
+  updateHeaderBadge();
 }
 
 function cadLimpar() {
@@ -2712,8 +2728,8 @@ async function initApp() {
     if (snap.exists) {
       const data = snap.data();
       if (data.products && data.products.length) STATE.products = data.products;
-    document.getElementById('hdr-badge').textContent = STATE.products.length + ' peças';
       if (data.base)            STATE.base = data.base;
+      if (Array.isArray(data.fichas)) STATE.fichas = data.fichas;
       if (data.custoProcesso)   STATE.custoProcesso = data.custoProcesso;
     }
   } catch(e) {
@@ -2722,7 +2738,7 @@ async function initApp() {
 
   // Hide loader and render app
   document.getElementById('db-loader').style.display = 'none';
-  document.getElementById('hdr-badge').textContent = STATE.products.length + ' peças';
+  updateHeaderBadge('dashboard');
   renderDashboard();
   renderTable();
   simRenderItems();
@@ -2734,8 +2750,9 @@ async function initApp() {
     if (!data.updatedAt) return;
     if (data.products) STATE.products = data.products;
     if (data.base)     STATE.base     = data.base;
+    if (Array.isArray(data.fichas)) STATE.fichas = data.fichas;
     if (data.custoProcesso) STATE.custoProcesso = data.custoProcesso;
-    document.getElementById('hdr-badge').textContent = STATE.products.length + ' peças';
+    updateHeaderBadge();
     renderDashboard();
     renderTable();
   });
