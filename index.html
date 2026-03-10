@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Banho de Peças</title>
+<title>Gestão de Banho Galvânico</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Barlow:wght@400;500;600;700;800;900&display=swap');
 
@@ -66,8 +66,6 @@ body {
   font-size: 1.05rem; font-weight: 900; letter-spacing: 2.5px;
   text-transform: uppercase; color: #fff;
   margin-right: 32px; flex-shrink: 0;
-  /* Mobile: allow it to grow/center */
-  flex: 0 0 auto;
 }
 .logo em { color: var(--b4); font-style: normal; }
 .nav { display: flex; gap: 2px; flex: 1; }
@@ -392,487 +390,171 @@ tbody tr:last-child td { border-bottom: none; }
   font-family: 'IBM Plex Mono', monospace; }
 .hist-table tr:last-child td { border-bottom: none; }
 
-/* ── LOGIN SCREEN ── */
-#login-screen {
-  position: fixed; inset: 0; z-index: 99999;
-  background: linear-gradient(135deg, #0f1e2e 0%, #0366a5 60%, #3eac48 100%);
-  display: flex; align-items: center; justify-content: center;
-}
-#login-screen.hidden { display: none; }
-.login-card {
-  background: #fff; border-radius: 18px;
-  padding: 44px 40px 36px;
-  width: 380px; max-width: 95vw;
-  box-shadow: 0 32px 80px rgba(0,0,0,0.35);
-  display: flex; flex-direction: column; align-items: center; gap: 0;
-}
-.login-logo {
-  font-family: 'Barlow', sans-serif;
-  font-size: 1.25rem; font-weight: 900; letter-spacing: 3px;
-  text-transform: uppercase; color: var(--b1); margin-bottom: 4px;
-}
-.login-logo em { color: var(--b2); font-style: normal; }
-.login-sub {
-  font-size: 0.75rem; color: var(--text2);
-  font-family: 'IBM Plex Mono', monospace;
-  margin-bottom: 32px; letter-spacing: 0.5px;
-}
-.login-field { width: 100%; margin-bottom: 14px; }
-.login-field label {
-  display: block; font-size: 0.68rem; font-weight: 700;
-  letter-spacing: 1px; text-transform: uppercase;
-  color: var(--b1); margin-bottom: 5px;
-}
-.login-field input {
-  width: 100%; padding: 10px 14px;
-  border: 1.5px solid var(--border); border-radius: 8px;
-  font-family: 'Barlow', sans-serif; font-size: 0.9rem;
-  color: var(--text); background: var(--bg);
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-.login-field input:focus {
-  outline: none; border-color: var(--b1);
-  box-shadow: 0 0 0 3px rgba(3,102,165,0.12);
-}
-.login-field input.login-error { border-color: var(--red); }
-.login-err-msg {
-  font-size: 0.75rem; color: var(--red);
-  background: var(--red-dim); border-radius: 6px;
-  padding: 7px 12px; width: 100%; margin-bottom: 12px;
-  display: none; text-align: center;
-}
-.login-err-msg.show { display: block; }
-.login-btn {
-  width: 100%; padding: 11px; border: none; border-radius: 8px;
-  background: var(--b1); color: #fff;
-  font-family: 'Barlow', sans-serif; font-size: 0.95rem;
-  font-weight: 700; cursor: pointer; letter-spacing: 0.5px;
-  transition: background 0.15s, box-shadow 0.15s; margin-top: 6px;
-}
-.login-btn:hover { background: #024f82; box-shadow: 0 4px 14px rgba(3,102,165,0.30); }
-.login-footer {
-  margin-top: 22px; font-size: 0.68rem;
-  color: var(--text2); text-align: center; line-height: 1.6;
-}
-
-/* ── USER BADGE IN HEADER ── */
-.user-badge {
-  display: flex; align-items: center; gap: 8px;
-  margin-left: 12px; flex-shrink: 0;
-}
-.user-role-tag {
-  font-size: 0.65rem; font-family: 'IBM Plex Mono', monospace;
-  font-weight: 700; padding: 3px 9px; border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.35); color: rgba(255,255,255,0.90);
-  background: rgba(255,255,255,0.13); white-space: nowrap;
-}
-.user-role-tag.admin { border-color: var(--b4); color: var(--b4); }
-.logout-btn {
-  padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.30);
-  background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.75);
-  font-family: 'Barlow', sans-serif; font-size: 0.73rem;
-  font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap;
-}
-.logout-btn:hover { background: rgba(192,57,43,0.25); color: #fff; border-color: rgba(192,57,43,0.5); }
-
-/* ── VIEWER LOCK OVERLAY (for restricted nav items) ── */
-.nav-btn.locked { opacity: 0.45; cursor: not-allowed; }
-.nav-btn.locked:hover { background: transparent; color: rgba(255,255,255,0.65); }
-
-/* ── LOCKOUT WARNING ── */
-.login-lockout {
-  font-size: 0.75rem; color: var(--orange);
-  background: rgba(201,107,26,0.09); border: 1px solid rgba(201,107,26,0.25);
-  border-radius: 6px; padding: 7px 12px; width: 100%; margin-bottom: 12px;
-  display: none; text-align: center; line-height: 1.5;
-}
-.login-lockout.show { display: block; }
-.login-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-
-/* ── PASSWORD TOGGLE ── */
-.pass-wrap { position: relative; width: 100%; }
-.pass-wrap input { padding-right: 42px; }
-.pass-toggle {
-  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-  background: none; border: none; cursor: pointer; color: var(--text2);
-  font-size: 1rem; padding: 2px 4px; line-height: 1;
-  transition: color 0.15s;
-}
-.pass-toggle:hover { color: var(--b1); }
-
-/* ── SESSION TIMEOUT BANNER ── */
-#session-warn {
-  position: fixed; bottom: 70px; right: 24px; z-index: 9998;
-  background: #fff3cd; color: #856404; border: 1px solid #ffc107;
-  border-radius: 10px; padding: 12px 18px; font-size: 0.82rem;
-  font-weight: 700; box-shadow: 0 4px 20px rgba(0,0,0,0.12);
-  display: none; align-items: center; gap: 10px; max-width: 320px;
-}
-#session-warn.show { display: flex; }
-#session-warn-timer { font-family: 'IBM Plex Mono', monospace; font-size: 1rem; color: var(--red); }
-#session-warn-extend {
-  margin-left: auto; padding: 4px 10px; border-radius: 5px;
-  background: var(--b1); color: #fff; border: none;
-  font-size: 0.75rem; font-weight: 700; cursor: pointer;
-}
-
-/* ── ACTIVITY LOG PANEL ── */
-#log-panel {
-  position: fixed; right: 0; top: 0; bottom: 0; width: 380px; z-index: 8000;
-  background: var(--surface); border-left: 2px solid var(--border);
-  box-shadow: -6px 0 30px rgba(3,102,165,0.10);
-  transform: translateX(100%); transition: transform 0.25s ease;
-  display: flex; flex-direction: column;
-}
-#log-panel.open { transform: none; }
-.log-head {
-  background: var(--b1); color: #fff; padding: 16px 20px;
-  display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
-}
-.log-head-title { font-weight: 800; font-size: 0.95rem; letter-spacing: 0.5px; }
-.log-head-close {
-  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25);
-  color: #fff; border-radius: 5px; padding: 3px 10px;
-  cursor: pointer; font-size: 0.8rem; font-weight: 700;
-}
-.log-head-close:hover { background: rgba(192,57,43,0.4); }
-.log-filter-bar {
-  padding: 10px 14px; border-bottom: 1px solid var(--border);
-  display: flex; gap: 6px; flex-shrink: 0; flex-wrap: wrap;
-}
-.log-chip {
-  padding: 3px 10px; border-radius: 20px; border: 1px solid var(--border);
-  font-size: 0.7rem; font-weight: 700; cursor: pointer; background: var(--surf2); color: var(--text2);
-  transition: all 0.12s;
-}
-.log-chip.on { background: var(--b1); color: #fff; border-color: var(--b1); }
-#log-list { flex: 1; overflow-y: auto; padding: 8px 0; }
-.log-item {
-  padding: 9px 16px; border-bottom: 1px solid var(--border);
-  transition: background 0.1s;
-}
-.log-item:hover { background: var(--surf2); }
-.log-item-head { display: flex; align-items: center; gap: 7px; margin-bottom: 3px; }
-.log-icon { font-size: 0.95rem; flex-shrink: 0; }
-.log-action { font-size: 0.78rem; font-weight: 700; color: var(--text); }
-.log-time { font-family: 'IBM Plex Mono', monospace; font-size: 0.65rem; color: var(--text2); margin-left: auto; }
-.log-detail { font-size: 0.73rem; color: var(--text2); line-height: 1.4; }
-.log-user-tag {
-  font-size: 0.63rem; font-weight: 700; padding: 1px 6px; border-radius: 10px;
-  background: rgba(3,102,165,0.10); color: var(--b1);
-}
-.log-user-tag.viewer { background: rgba(62,172,72,0.10); color: var(--green); }
-.log-empty { padding: 40px 20px; text-align: center; color: var(--text2); font-size: 0.82rem; }
-.log-clear-btn {
-  margin: 10px 14px; padding: 7px; border-radius: 6px; border: 1px solid var(--border);
-  background: var(--surf2); color: var(--text2); font-size: 0.75rem; font-weight: 700;
-  cursor: pointer; text-align: center; flex-shrink: 0;
-}
-.log-clear-btn:hover { background: var(--red-dim); color: var(--red); border-color: var(--red); }
-
-/* ── LOG BUTTON IN HEADER ── */
-.log-open-btn {
-  padding: 5px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.25);
-  background: rgba(255,255,255,0.10); color: rgba(255,255,255,0.80);
-  font-size: 0.72rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
-  white-space: nowrap; margin-right: 6px; font-family: 'Barlow', sans-serif;
-}
-.log-open-btn:hover { background: rgba(255,255,255,0.20); color: #fff; }
-.log-badge {
-  display: inline-flex; align-items: center; justify-content: center;
-  background: var(--b2); color: #fff; border-radius: 10px;
-  font-size: 0.6rem; font-weight: 900; padding: 1px 5px;
-  min-width: 16px; margin-left: 4px; vertical-align: middle;
-}
-
-/* ── CHART TOOLTIP ── */
-.sparkline-wrap { cursor: crosshair; }
-.bar-track { cursor: pointer; }
-canvas#donutCanvas { cursor: pointer; }
-
-/* ══════════════════════════════════════════
-   MOBILE & TABLET RESPONSIVE
-   ══════════════════════════════════════════ */
-
-/* ── MOBILE NAV HAMBURGER ── */
-.hamburger {
-  display: none; flex-direction: column; gap: 5px;
-  background: none; border: none; cursor: pointer;
-  padding: 6px; margin-right: 8px; flex-shrink: 0;
-}
-.hamburger span {
-  display: block; width: 22px; height: 2px;
-  background: rgba(255,255,255,0.85); border-radius: 2px;
-  transition: all 0.25s;
-}
-.hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
-.hamburger.open span:nth-child(2) { opacity: 0; }
-.hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
-
-/* Mobile nav drawer */
-.nav-drawer {
-  display: none; position: fixed;
-  top: 54px; left: 0; right: 0;
-  background: var(--b1);
-  border-bottom: 3px solid var(--b2);
-  z-index: 190; padding: 10px 0;
-  box-shadow: 0 8px 24px rgba(3,102,165,0.25);
-  animation: slideDown 0.2s ease;
-}
-@keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:none; } }
-.nav-drawer .nav-btn {
-  display: block; width: 100%; text-align: left;
-  padding: 12px 20px; border-radius: 0;
-  font-size: 0.9rem; color: rgba(255,255,255,0.80);
-}
-.nav-drawer .nav-btn.active,
-.nav-drawer .nav-btn:hover { background: rgba(255,255,255,0.15); color: #fff; }
-.nav-drawer .nav-btn.locked { opacity: 0.35; }
-
-/* ── TABLET (≤1100px) ── */
-@media (max-width: 1100px) {
-  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+/* responsive */
+@media(max-width:1100px){
+  .kpi-grid { grid-template-columns: repeat(3,1fr); }
   .charts-row { grid-template-columns: 1fr 1fr; }
   .cad-split { grid-template-columns: 1fr; }
-  .hist-row { grid-template-columns: 1fr !important; }
 }
-
-/* ── MOBILE (≤768px) ── */
-@media (max-width: 768px) {
-  html { font-size: 13px; }
-
-  /* Header */
-  .header { padding: 0 12px; height: 52px; }
-  .logo { font-size: 0.9rem; margin-right: 0; }
-  .nav { display: none; }
-  .hamburger { display: flex; }
-  .header-badge { display: none; }
-  .user-role-tag { display: none; }
-  .user-badge { gap: 6px; }
-  .logout-btn { font-size: 0.68rem; padding: 4px 9px; }
-  .log-open-btn { font-size: 0.65rem; padding: 4px 8px; }
-
-  /* Main */
-  .main { padding: 14px 12px; }
-
-  /* KPI grid */
-  .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
-  .kpi { padding: 12px 13px; }
-  .kpi-val { font-size: 1.2rem; }
-
-  /* Charts */
-  .charts-row { grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
-  .chart-card { padding: 14px 14px; }
-  .hist-row { grid-template-columns: 1fr !important; gap: 10px; }
-  .history-chart { padding: 14px 14px; }
-
-  /* Section headers */
-  .sec-head { flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 14px; }
-  .sec-title { font-size: 1.1rem; }
-
-  /* Table — card view on mobile */
-  .tbl-wrap { overflow-x: unset; border: none; box-shadow: none; border-radius: 0; }
-  table, thead, tbody, tr, td, th { display: block; }
-  thead { display: none; }
-  tbody tr {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; margin-bottom: 10px;
-    padding: 12px 14px; position: relative;
-    box-shadow: 0 1px 4px rgba(3,102,165,0.06);
-  }
-  tbody tr:nth-child(even) { background: var(--surface); }
-  tbody td {
-    padding: 4px 0; border: none; font-size: 0.82rem;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  tbody td::before {
-    content: attr(data-label);
-    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.8px;
-    text-transform: uppercase; color: var(--text2); flex-shrink: 0;
-    margin-right: 8px;
-  }
-  tbody td:first-child { justify-content: flex-start; gap: 10px; margin-bottom: 6px; }
-  tbody td:first-child::before { content: none; }
-  /* Hide history sparkbar on mobile */
-  tbody td:nth-child(10) { display: none; }
-
-  /* Filter chips wrap */
-  .tbl-controls { gap: 6px; }
-  .search-box { min-width: unset; }
-  .chip { font-size: 0.7rem; padding: 4px 10px; }
-
-  /* Modals */
-  .modal { width: 95vw !important; padding: 20px 16px; border-radius: 10px; }
-  .form-grid { grid-template-columns: 1fr !important; }
-  .form-group.full { grid-column: span 1; }
-  .modal-head { margin-bottom: 16px; padding-bottom: 10px; }
-
-  /* Base valores page */
+@media(max-width:700px){
+  .kpi-grid { grid-template-columns: repeat(2,1fr); }
+  .charts-row { grid-template-columns: 1fr; }
   .base-grid { grid-template-columns: 1fr; }
+  .hist-row { grid-template-columns: 1fr; }
   .base-fields { grid-template-columns: 1fr; }
-  .update-row { flex-direction: column; gap: 10px; }
-  .update-preview { grid-template-columns: repeat(2,1fr); }
-
-  /* Cadastro */
-  .cad-split { grid-template-columns: 1fr; }
-  .cad-form-card, .cad-preview-card { padding: 16px 14px; }
-
-  /* Simulador */
-  #sim-items-area .sim-card { padding: 12px 14px; }
-
-  /* Pagination */
-  .pager { justify-content: center; flex-wrap: wrap; margin-top: 8px; }
-  .pg-info { width: 100%; text-align: center; margin-bottom: 4px; margin-right: 0; }
-
-  /* Log panel */
-  #log-panel { width: 100vw; }
-
-  /* Login card */
-  .login-card { padding: 32px 24px 28px; }
-  .twofa-card { padding: 28px 20px 24px; }
-
-  /* Session warn */
-  #session-warn { bottom: 16px; right: 12px; left: 12px; max-width: unset; font-size: 0.78rem; }
-}
-
-/* ── SMALL MOBILE (≤480px) ── */
-@media (max-width: 480px) {
-  .kpi-grid { grid-template-columns: 1fr 1fr; }
-  .kpi-val { font-size: 1.1rem; }
-  .header { height: 50px; }
-  .main { padding: 10px 10px; }
-  .login-card { padding: 28px 18px 22px; width: 96vw; }
 }
 </style>
 
 <!-- Firebase CDN -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
-<!-- LOGIN SCREEN -->
-<div id="login-screen">
-  <div class="login-card">
-    <div class="login-logo">BANHO DE PEÇAS</div>
-    <div class="login-sub">Sistema de Gestão de Banho Galvânico</div>
-
-    <div class="login-field">
-      <label>E-mail</label>
-      <input type="email" id="login-email" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')doLogin()" autocomplete="username">
-    </div>
-    <div class="login-field">
-      <label>Senha</label>
-      <div class="pass-wrap">
-        <input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" autocomplete="current-password">
-        <button class="pass-toggle" type="button" onclick="togglePassVis()" id="pass-eye" title="Mostrar/ocultar senha">👁</button>
-      </div>
-    </div>
-    <div class="login-err-msg" id="login-err">E-mail ou senha incorretos. Tente novamente.</div>
-    <div class="login-lockout" id="login-lockout"></div>
-    <button class="login-btn" id="login-btn" onclick="doLogin()">Entrar</button>
-    <div class="login-footer">
-      Acesso restrito a usuários autorizados.<br>
-      Em caso de dúvidas, contate o administrador.
-    </div>
-  </div>
-</div>
-
 <!-- DB Loading Overlay -->
-<div id="db-loader" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(245,248,251,0.97);flex-direction:column;align-items:center;justify-content:center;gap:16px">
+<div id="db-loader" style="display:flex;position:fixed;inset:0;z-index:9999;background:rgba(245,248,251,0.97);flex-direction:column;align-items:center;justify-content:center;gap:16px">
   <div style="width:48px;height:48px;border:4px solid #cdd8e4;border-top-color:#0366a5;border-radius:50%;animation:_spin 0.8s linear infinite"></div>
   <div style="font-family:'Barlow',sans-serif;font-weight:700;color:#0366a5;font-size:1rem;letter-spacing:1px">Conectando ao banco de dados...</div>
   <div style="font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:#556678">Firebase · Firestore</div>
   <style>@keyframes _spin{to{transform:rotate(360deg)}}</style>
 </div>
 
+
+<!-- LOGIN SCREEN -->
+<div id="login-screen" style="display:none;position:fixed;inset:0;z-index:8888;background:linear-gradient(135deg,#eef3f8,#f5f8fb);align-items:center;justify-content:center;">
+  <div style="background:#fff;border:1px solid #cdd8e4;border-radius:18px;padding:44px 40px;width:100%;max-width:420px;box-shadow:0 12px 50px rgba(3,102,165,0.13);">
+    <div style="text-align:center;margin-bottom:32px;">
+      <div style="font-family:'Barlow',sans-serif;font-size:1.5rem;font-weight:900;letter-spacing:2.5px;text-transform:uppercase;color:#0366a5;">BANHO<span style="color:#71b97a;">.</span>GESTÃO</div>
+      <div style="width:40px;height:3px;background:linear-gradient(90deg,#0366a5,#3eac48);border-radius:2px;margin:10px auto 0;"></div>
+      <div style="font-size:0.8rem;color:#556678;margin-top:10px;font-weight:500;">Acesse com sua conta autorizada</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div>
+        <div style="font-size:0.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#0366a5;margin-bottom:6px;">E-mail</div>
+        <input id="login-email" type="email" placeholder="seu@email.com" style="width:100%;background:#f5f8fb;border:1.5px solid #cdd8e4;border-radius:8px;padding:11px 14px;font-family:'Barlow',sans-serif;font-size:0.88rem;color:#0f1e2e;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#0366a5'" onblur="this.style.borderColor='#cdd8e4'">
+      </div>
+      <div>
+        <div style="font-size:0.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#0366a5;margin-bottom:6px;">Senha</div>
+        <input id="login-password" type="password" placeholder="••••••••" style="width:100%;background:#f5f8fb;border:1.5px solid #cdd8e4;border-radius:8px;padding:11px 14px;font-family:'Barlow',sans-serif;font-size:0.88rem;color:#0f1e2e;outline:none;box-sizing:border-box;" onfocus="this.style.borderColor='#0366a5'" onblur="this.style.borderColor='#cdd8e4'" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <div id="login-error" style="display:none;background:rgba(192,57,43,0.08);border:1px solid #c0392b;border-radius:7px;padding:9px 13px;font-size:0.78rem;color:#c0392b;font-weight:600;"></div>
+      <button id="login-btn" onclick="doLogin()" style="background:#0366a5;color:#fff;border:none;border-radius:9px;padding:13px;font-family:'Barlow',sans-serif;font-size:0.92rem;font-weight:700;cursor:pointer;letter-spacing:0.5px;margin-top:2px;" onmouseover="this.style.background='#024f82'" onmouseout="this.style.background='#0366a5'">Entrar</button>
+    </div>
+    <div style="text-align:center;margin-top:22px;font-size:0.7rem;color:#aec0d0;">🔒 Acesso restrito — somente usuários autorizados</div>
+  </div>
+</div>
+
 <!-- HEADER -->
 <header class="header">
-  <button class="hamburger" id="hamburger-btn" onclick="toggleMobileNav()" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </button>
-  <div class="logo">BANHO DE PEÇAS</div>
-  <nav class="nav" id="main-nav">
+  <div class="logo">BANHO<em>.</em>GESTÃO</div>
+  <nav class="nav">
     <button class="nav-btn active" onclick="nav('dashboard',this)">Dashboard</button>
     <button class="nav-btn" onclick="nav('produtos',this)">Produtos</button>
     <button class="nav-btn" onclick="nav('base',this)">Base de Valores</button>
     <button class="nav-btn" onclick="nav('simulador',this)">Simulador</button>
-    <button class="nav-btn" onclick="nav('evolutize',this)">🔗 Evolutize</button>
-    <button class="nav-btn" onclick="nav('cadastro',this)">+ Cadastrar Peça</button>
+    <button class="nav-btn" id="nav-cadastro-btn" onclick="nav('cadastro',this)">+ Cadastrar Peça</button>
   </nav>
-  <div class="header-badge" id="hdr-badge">— peças</div>
-  <div class="user-badge">
-    <button class="log-open-btn" id="log-open-btn" onclick="toggleLogPanel()" style="display:none">📋 Log <span class="log-badge" id="log-badge">0</span></button>
-    <span class="user-role-tag" id="user-role-tag"></span>
-    <button class="logout-btn" onclick="doLogout()">Sair</button>
+  <div style="display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0;">
+    <div class="header-badge" id="hdr-badge">— peças</div>
+    <span id="role-badge" style="display:none;font-size:0.65rem;font-family:'IBM Plex Mono',monospace;font-weight:700;padding:3px 9px;border-radius:20px;"></span>
+    <span id="user-email-lbl" style="display:none;font-size:0.68rem;color:rgba(255,255,255,0.70);font-family:'IBM Plex Mono',monospace;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+    <button id="logout-btn" onclick="doLogout()" style="display:none;background:rgba(255,255,255,0.13);border:1px solid rgba(255,255,255,0.22);color:rgba(255,255,255,0.85);border-radius:6px;padding:4px 11px;cursor:pointer;font-size:0.72rem;font-family:'Barlow',sans-serif;font-weight:600;" onmouseover="this.style.background='rgba(192,57,43,0.45)'" onmouseout="this.style.background='rgba(255,255,255,0.13)'">Sair</button>
   </div>
 </header>
-<!-- MOBILE NAV DRAWER -->
-<div class="nav-drawer" id="nav-drawer"></div>
-
-<!-- SESSION TIMEOUT WARNING -->
-<div id="session-warn">
-  ⏱ Sessão expira em <span id="session-warn-timer">--</span>
-  <button id="session-warn-extend" onclick="extendSession()">Manter</button>
-</div>
-
-<!-- ACTIVITY LOG PANEL -->
-<div id="log-panel">
-  <div class="log-head">
-    <div class="log-head-title">📋 Log de Atividades</div>
-    <button class="log-head-close" onclick="toggleLogPanel()">✕ Fechar</button>
-  </div>
-  <div class="log-filter-bar">
-    <button class="log-chip on" data-filter="all" onclick="filterLog(this)">Todos</button>
-    <button class="log-chip" data-filter="login" onclick="filterLog(this)">Login</button>
-    <button class="log-chip" data-filter="edit" onclick="filterLog(this)">Edições</button>
-    <button class="log-chip" data-filter="delete" onclick="filterLog(this)">Exclusões</button>
-    <button class="log-chip" data-filter="create" onclick="filterLog(this)">Cadastros</button>
-  </div>
-  <div id="log-list"></div>
-  <button class="log-clear-btn" onclick="clearLog()">🗑 Limpar histórico</button>
-</div>
 
 <div class="main">
 
 <!-- ══════════ DASHBOARD ══════════ -->
 <div id="page-dashboard" class="page active">
   <div class="sec-head">
-    <div><div class="sec-title">Dashboard <span>Geral</span></div>
-    <div class="sec-sub">Visão consolidada de todos os banhos</div></div>
+    <div><div class="sec-title">Ordens de <span>Banho</span></div>
+    <div class="sec-sub">Acompanhamento em tempo real da produção</div></div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <div id="dash-clock" style="font-family:'IBM Plex Mono',monospace;font-size:0.8rem;color:var(--text2);padding:6px 12px;background:var(--surface);border:1px solid var(--border);border-radius:7px;"></div>
+      <button id="btn-nova-ordem" class="btn btn-primary" onclick="abrirModalOrdem()" style="font-size:0.82rem;padding:8px 18px;display:none;">+ Nova Ordem</button>
+    </div>
   </div>
-  <div class="kpi-grid" id="kpi-grid"></div>
-  <div class="charts-row">
-    <div class="chart-card">
-      <div class="chart-title">Por Material</div>
-      <div class="donut-wrap">
-        <canvas id="donutCanvas" width="180" height="180"></canvas>
-        <div class="donut-legend" id="donut-legend"></div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+    <div class="kpi" style="border-left:4px solid var(--orange);"><div class="kpi-label">Em Andamento</div><div class="kpi-val" id="kpi-andamento" style="color:var(--orange)">0</div><div class="kpi-sub">banhos agora</div></div>
+    <div class="kpi" style="border-left:4px solid var(--b3);"><div class="kpi-label">Na Fila</div><div class="kpi-val" id="kpi-fila" style="color:var(--b3)">0</div><div class="kpi-sub">aguardando início</div></div>
+    <div class="kpi" style="border-left:4px solid var(--green);"><div class="kpi-label">Concluídos Hoje</div><div class="kpi-val" id="kpi-hoje" style="color:var(--green)">0</div><div class="kpi-sub">finalizados</div></div>
+    <div class="kpi" style="border-left:4px solid var(--b2);"><div class="kpi-label">Últimos 7 dias</div><div class="kpi-val" id="kpi-7d" style="color:var(--b2)">0</div><div class="kpi-sub">banhos realizados</div></div>
+  </div>
+  <div style="margin-bottom:20px;">
+    <div style="font-size:0.7rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--orange);margin-bottom:10px;display:flex;align-items:center;gap:8px;"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--orange);animation:pulse-dot 1.2s infinite;"></span>Em Andamento</div>
+    <div id="ordens-andamento"><div class="ordem-empty">Nenhum banho em andamento no momento</div></div>
+  </div>
+  <div style="margin-bottom:20px;">
+    <div style="font-size:0.7rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--b1);margin-bottom:10px;">&#9200; Na Fila</div>
+    <div id="ordens-fila"><div class="ordem-empty">Nenhuma ordem na fila</div></div>
+  </div>
+  <div style="margin-bottom:20px;">
+    <div style="font-size:0.7rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--green);margin-bottom:10px;">&#10003; Concluídos Hoje</div>
+    <div id="ordens-hoje"><div class="ordem-empty">Nenhum banho concluído hoje</div></div>
+  </div>
+  <div>
+    <div style="font-size:0.7rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text2);margin-bottom:10px;">&#128203; Histórico — Últimos 7 dias</div>
+    <div id="ordens-7d"><div class="ordem-empty">Sem histórico nos últimos 7 dias</div></div>
+  </div>
+</div>
+
+<!-- MODAL NOVA ORDEM -->
+<div class="modal-overlay" id="ordem-modal">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-head">
+      <div class="modal-title">&#127981; Nova Ordem de Banho</div>
+      <button class="modal-close" onclick="closeModal('ordem-modal')">&#10005;</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="form-grid">
+        <div class="form-group">
+          <div class="form-label">Material *</div>
+          <select class="form-select" id="ord-mat" onchange="updateOrdProc()">
+            <option value="">Selecione...</option>
+            <option value="Niquel">Níquel</option>
+            <option value="Ouro">Ouro</option>
+            <option value="Cromo">Cromo</option>
+            <option value="Estanho">Estanho</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Processo *</div>
+          <select class="form-select" id="ord-proc"><option value="">Selecione o material primeiro</option></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Status</div>
+        <select class="form-select" id="ord-status">
+          <option value="andamento">Em Andamento</option>
+          <option value="fila">Na Fila</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <div class="form-label">Peças do Lote *</div>
+        <div style="display:flex;gap:8px;margin-bottom:6px;">
+          <input class="form-input" id="ord-peca-search" placeholder="Buscar por código ou descrição..." oninput="ordSearchPeca()" style="flex:1;">
+          <input class="form-input mono" id="ord-peca-qty" type="number" min="1" value="1" style="width:80px;">
+          <button class="btn btn-ghost" onclick="ordAddPeca()" style="padding:8px 14px;font-size:0.8rem;white-space:nowrap;">+ Add</button>
+        </div>
+        <div id="ord-peca-results" style="display:none;border:1px solid var(--border);border-radius:7px;overflow:hidden;max-height:160px;overflow-y:auto;margin-bottom:6px;background:var(--surface);"></div>
+        <div id="ord-pecas-lista" style="display:flex;flex-direction:column;gap:6px;"></div>
+      </div>
+      <div class="form-group"><div class="form-label">Responsável</div><input class="form-input" id="ord-resp" placeholder="Nome do operador (opcional)"></div>
+      <div class="form-group"><div class="form-label">Observação</div><input class="form-input" id="ord-obs" placeholder="Observação opcional..."></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px;">
+        <button class="btn btn-ghost" onclick="closeModal('ordem-modal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="salvarOrdem()">Salvar Ordem</button>
       </div>
     </div>
-    <div class="chart-card">
-      <div class="chart-title">Top 10 — Forecast 30 dias (un.)</div>
-      <div class="bar-list" id="top-forecast-bars"></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">Valor Total Forecast 30d por Material</div>
-      <div class="bar-list" id="val-mat-bars"></div>
-    </div>
   </div>
-  <div class="hist-row" style="grid-template-columns:1fr 1fr">
-    <div class="history-chart">
-      <div class="chart-title">Distribuição de Peças por Material</div>
-      <div id="chart-mat-dist" style="margin-top:10px"></div>
-    </div>
-    <div class="history-chart">
-      <div class="chart-title">Última Taxa Registrada por Material (R$/mm²)</div>
-      <div id="chart-taxa-atual" style="margin-top:10px"></div>
-    </div>
-  </div>
-
-  <!-- TOOLTIP for charts -->
-  <div id="chart-tooltip" style="position:fixed;z-index:3000;pointer-events:none;display:none;background:#0f1e2e;color:#fff;padding:8px 13px;border-radius:8px;font-size:0.78rem;font-family:'IBM Plex Mono',monospace;box-shadow:0 4px 16px rgba(0,0,0,0.25);white-space:nowrap;border:1px solid rgba(255,255,255,0.1)"></div>
 </div>
+<style>
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(1.3)}}
+.ordem-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 18px;display:flex;align-items:flex-start;gap:14px;transition:box-shadow 0.15s;margin-bottom:8px;}
+.ordem-card:hover{box-shadow:0 4px 16px rgba(3,102,165,0.09);}
+.ordem-empty{text-align:center;padding:24px;color:var(--text2);font-size:0.82rem;background:var(--surface);border:1px dashed var(--border);border-radius:10px;}
+</style>
 
 <!-- ══════════ PRODUTOS ══════════ -->
 <div id="page-produtos" class="page">
@@ -1041,68 +723,7 @@ canvas#donutCanvas { cursor: pointer; }
   </div>
 </div>
 
-<!-- ══════════ EVOLUTIZE ERP ══════════ -->
-<div id="page-evolutize" class="page">
-  <div class="sec-head">
-    <div><div class="sec-title">Evolutize <span>ERP</span></div>
-    <div class="sec-sub">Rotações e custos importados do sistema Evolutize</div></div>
-    <button class="btn-primary" onclick="evoRefresh()" id="evo-refresh-btn">⟳ Atualizar</button>
-  </div>
-
-  <!-- Status bar -->
-  <div id="evo-status-bar" style="display:flex;align-items:center;gap:12px;margin-bottom:18px;padding:12px 16px;background:rgba(3,102,165,0.07);border:1px solid rgba(3,102,165,0.15);border-radius:10px;font-size:0.82rem;color:var(--muted)">
-    <span id="evo-status-dot" style="width:10px;height:10px;border-radius:50%;background:#aaa;flex-shrink:0"></span>
-    <span id="evo-status-msg">Aguardando conexão com o Evolutize...</span>
-    <span style="margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:0.75rem" id="evo-last-sync">—</span>
-  </div>
-
-  <!-- KPI Cards -->
-  <div class="kpi-grid" id="evo-kpi-grid" style="margin-bottom:24px"></div>
-
-  <!-- Config panel -->
-  <div class="chart-card" style="margin-bottom:20px">
-    <div class="chart-title" style="margin-bottom:14px">⚙️ Configuração da Integração</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end">
-      <div>
-        <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:4px">URL da API Evolutize</label>
-        <input id="evo-api-url" type="text" placeholder="https://api.evolutize.com.br/v1" style="width:100%;padding:8px 12px;border:1px solid var(--b3);border-radius:7px;font-size:0.85rem;background:var(--bg2);color:var(--tx)">
-      </div>
-      <div>
-        <label style="font-size:0.78rem;color:var(--muted);display:block;margin-bottom:4px">Token de Autenticação</label>
-        <input id="evo-api-token" type="password" placeholder="Bearer token ou API key" style="width:100%;padding:8px 12px;border:1px solid var(--b3);border-radius:7px;font-size:0.85rem;background:var(--bg2);color:var(--tx)">
-      </div>
-      <button onclick="evoSaveConfig()" class="btn-primary" style="white-space:nowrap">Salvar Config</button>
-    </div>
-    <div style="margin-top:10px;font-size:0.75rem;color:var(--muted)">
-      💡 Quando a API estiver disponível, os dados de rotação e custo serão sincronizados automaticamente. Os campos abaixo mostram dados de demonstração até a conexão ser estabelecida.
-    </div>
-  </div>
-
-  <!-- Rotações table -->
-  <div class="chart-card">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div class="chart-title">📦 Rotações por Produto (últimos 30 dias)</div>
-      <input type="text" id="evo-search" placeholder="🔍 Filtrar produto..." oninput="evoFilterTable()" style="padding:6px 12px;border:1px solid var(--b3);border-radius:7px;font-size:0.8rem;background:var(--bg2);color:var(--tx);width:200px">
-    </div>
-    <div style="overflow-x:auto">
-      <table style="width:100%;border-collapse:collapse;font-size:0.83rem" id="evo-table">
-        <thead>
-          <tr style="border-bottom:2px solid var(--b3)">
-            <th style="text-align:left;padding:8px 10px;color:var(--muted);font-weight:600">Código</th>
-            <th style="text-align:left;padding:8px 10px;color:var(--muted);font-weight:600">Descrição</th>
-            <th style="text-align:right;padding:8px 10px;color:var(--muted);font-weight:600">Qtd Rotação</th>
-            <th style="text-align:right;padding:8px 10px;color:var(--muted);font-weight:600">Custo Unit.</th>
-            <th style="text-align:right;padding:8px 10px;color:var(--muted);font-weight:600">Custo Total</th>
-            <th style="text-align:center;padding:8px 10px;color:var(--muted);font-weight:600">Status</th>
-          </tr>
-        </thead>
-        <tbody id="evo-tbody"></tbody>
-      </table>
-    </div>
-    <div id="evo-empty" style="display:none;text-align:center;padding:32px;color:var(--muted);font-size:0.9rem">Nenhum resultado encontrado.</div>
-  </div>
-</div>
-
+<!-- ══════════ CADASTRO ══════════ -->
 <div id="page-cadastro" class="page">
   <div class="sec-head">
     <div><div class="sec-title">Cadastrar Nova <span>Peça</span></div>
@@ -1240,27 +861,6 @@ canvas#donutCanvas { cursor: pointer; }
           <div class="form-label">Motivo da Alteração</div>
           <input class="form-input" id="edit-motivo" type="text" placeholder="Ex: Alteração de material, revisão de processo...">
         </div>
-        <div class="form-group full">
-          <div class="form-label">Imagem da Peça</div>
-          <div style="display:flex;gap:14px;align-items:flex-start">
-            <div id="edit-img-preview-wrap" style="width:80px;height:80px;border-radius:8px;background:var(--surf2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.8rem;overflow:hidden;flex-shrink:0">
-              <img id="edit-img-preview" style="width:100%;height:100%;object-fit:cover;display:none" alt="">
-              <span id="edit-img-placeholder">⚙️</span>
-            </div>
-            <div style="flex:1">
-              <div class="img-upload-area" id="edit-upload-area" onclick="document.getElementById('edit-img-input').click()"
-                ondragover="event.preventDefault();this.classList.add('drag')"
-                ondragleave="this.classList.remove('drag')"
-                ondrop="handleEditImgDrop(event)" style="padding:14px">
-                <div class="icon" style="font-size:1.2rem">📷</div>
-                <p style="font-size:0.75rem">Clique ou arraste para trocar a imagem</p>
-                <p style="font-size:0.65rem;margin-top:2px;color:var(--text2)">PNG, JPG, WEBP — máx 2MB</p>
-              </div>
-              <input type="file" id="edit-img-input" accept="image/*" style="display:none" onchange="handleEditImgSelect(event)">
-              <button type="button" id="edit-img-remove" onclick="removeEditImg()" style="display:none;margin-top:6px;font-size:0.72rem;color:var(--red);background:none;border:none;cursor:pointer;padding:0">✕ Remover imagem</button>
-            </div>
-          </div>
-        </div>
       </div>
       <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
         <button class="btn btn-ghost" onclick="closeModal('edit-modal')">Cancelar</button>
@@ -1298,283 +898,9 @@ canvas#donutCanvas { cursor: pointer; }
 <div class="toast" id="toast"></div>
 
 <script>
-// ══════════════════════════════════════════════
-//  AUTH — Login / Role / Security
-// ══════════════════════════════════════════════
-// Autenticação via tokens codificados — não altere manualmente
-const _A=[{_e:'cGNwQHRlc3RlLmNvbQ==',_p:'UGNwQDUwMTE=',role:'admin',label:'Admin \u00b7 PCP'},{_e:'cXVhbGlkYWRlQHRlc3RlLmNvbQ==',_p:'UWxkQDUwMTI=',role:'viewer',label:'Visualizador \u00b7 Qualidade'}];
-const ACCOUNTS=_A.map(u=>({email:atob(u._e),pass:atob(u._p),role:u.role,label:u.label}));
-const ADMIN_ONLY_PAGES   = ['base', 'cadastro'];
-const MAX_ATTEMPTS       = 3;
-const LOCKOUT_MS         = 2 * 60 * 1000;   // 2 minutes
-const SESSION_TIMEOUT_MS = 30 * 60 * 1000;  // 30 minutes
-const SESSION_WARN_MS    = 2 * 60 * 1000;   // warn 2 min before
-
-let currentUser     = null;
-let _viewerMode     = false;
-let _failCount      = 0;
-let _lockedUntil    = 0;
-let _lockTimer      = null;
-let _sessionTimer   = null;
-let _sessionWarnTmr = null;
-let _sessionEnd     = 0;
-let _warnCountdown  = null;
-
-// ── PASSWORD VISIBILITY ──
-function togglePassVis() {
-  const inp = document.getElementById('login-pass');
-  const eye = document.getElementById('pass-eye');
-  if (inp.type === 'password') { inp.type = 'text';     eye.textContent = '🙈'; }
-  else                         { inp.type = 'password'; eye.textContent = '👁';  }
-}
-
-// ── LOGIN ATTEMPT LOCKOUT ──
-function isLockedOut() { return Date.now() < _lockedUntil; }
-
-function startLockout() {
-  _lockedUntil = Date.now() + LOCKOUT_MS;
-  const btn = document.getElementById('login-btn');
-  btn.disabled = true;
-  document.getElementById('login-err').classList.remove('show');
-  updateLockoutUI();
-  _lockTimer = setInterval(updateLockoutUI, 1000);
-  logActivity('lock', '🔒 Conta bloqueada', `${MAX_ATTEMPTS} tentativas falhas seguidas`, 'sistema');
-}
-
-function updateLockoutUI() {
-  const remaining = Math.ceil((_lockedUntil - Date.now()) / 1000);
-  const lockEl = document.getElementById('login-lockout');
-  if (remaining <= 0) {
-    clearInterval(_lockTimer);
-    _failCount = 0;
-    document.getElementById('login-btn').disabled = false;
-    lockEl.classList.remove('show');
-    lockEl.textContent = '';
-    return;
-  }
-  lockEl.classList.add('show');
-  lockEl.innerHTML = `🔒 Muitas tentativas incorretas.<br>Aguarde <strong>${remaining}s</strong> para tentar novamente.`;
-}
-
-// ── SESSION TIMEOUT ──
-function resetSessionTimer() {
-  clearTimeout(_sessionTimer);
-  clearTimeout(_sessionWarnTmr);
-  clearInterval(_warnCountdown);
-  document.getElementById('session-warn').classList.remove('show');
-  if (!currentUser) return;
-  _sessionEnd = Date.now() + SESSION_TIMEOUT_MS;
-  _sessionWarnTmr = setTimeout(showSessionWarning, SESSION_TIMEOUT_MS - SESSION_WARN_MS);
-  _sessionTimer   = setTimeout(() => {
-    logActivity('logout', '⏱ Sessão expirada', 'Logout automático por inatividade', currentUser?.label || '');
-    doLogout(true);
-  }, SESSION_TIMEOUT_MS);
-}
-
-function showSessionWarning() {
-  const warnEl = document.getElementById('session-warn');
-  warnEl.classList.add('show');
-  _warnCountdown = setInterval(() => {
-    const s = Math.ceil((_sessionEnd - Date.now()) / 1000);
-    document.getElementById('session-warn-timer').textContent = s > 0 ? s + 's' : '0s';
-    if (s <= 0) clearInterval(_warnCountdown);
-  }, 500);
-}
-
-function extendSession() {
-  resetSessionTimer();
-  toast('✅ Sessão estendida por mais 30 minutos', 'success');
-}
-
-// Reset timer on any user interaction
-['mousemove','keydown','click','scroll','touchstart'].forEach(ev =>
-  document.addEventListener(ev, () => { if (currentUser) resetSessionTimer(); }, { passive: true })
-);
-
-// ── ACTIVITY LOG ──
-const _activityLog = [];
-
-function logActivity(type, action, detail, userLabel) {
-  const entry = {
-    type, action, detail,
-    user: userLabel || (currentUser?.label ?? 'sistema'),
-    role: currentUser?.role ?? 'sistema',
-    time: new Date().toLocaleString('pt-BR')
-  };
-  _activityLog.unshift(entry);
-  if (_activityLog.length > 200) _activityLog.pop();
-  updateLogBadge();
-  if (document.getElementById('log-panel').classList.contains('open')) renderLog();
-}
-
-function updateLogBadge() {
-  document.getElementById('log-badge').textContent = _activityLog.length;
-}
-
-let _logFilter = 'all';
-function filterLog(chip) {
-  document.querySelectorAll('.log-chip').forEach(c => c.classList.remove('on'));
-  chip.classList.add('on');
-  _logFilter = chip.dataset.filter;
-  renderLog();
-}
-
-function renderLog() {
-  const list = document.getElementById('log-list');
-  const icons = { login:'🔑', logout:'🚪', lock:'🔒', edit:'✏️', delete:'🗑', create:'➕', update:'⚡', view:'👁', duplicate:'📋' };
-  const filtered = _logFilter === 'all' ? _activityLog : _activityLog.filter(e => e.type === _logFilter);
-  if (!filtered.length) {
-    list.innerHTML = '<div class="log-empty">Nenhuma atividade registrada.</div>';
-    return;
-  }
-  list.innerHTML = filtered.map(e => `
-    <div class="log-item">
-      <div class="log-item-head">
-        <span class="log-icon">${icons[e.type] || '📌'}</span>
-        <span class="log-action">${e.action}</span>
-        <span class="log-user-tag ${e.role === 'viewer' ? 'viewer' : ''}">${e.user}</span>
-        <span class="log-time">${e.time}</span>
-      </div>
-      <div class="log-detail">${e.detail}</div>
-    </div>
-  `).join('');
-}
-
-function toggleLogPanel() {
-  const panel = document.getElementById('log-panel');
-  panel.classList.toggle('open');
-  if (panel.classList.contains('open')) renderLog();
-}
-
-function clearLog() {
-  if (!confirm('Limpar todo o histórico de atividades?')) return;
-  _activityLog.length = 0;
-  updateLogBadge();
-  renderLog();
-}
-
-// ── MAIN LOGIN ──
-function doLogin() {
-  if (isLockedOut()) return;
-
-  const email    = document.getElementById('login-email').value.trim().toLowerCase();
-  const pass     = document.getElementById('login-pass').value;
-  const errEl    = document.getElementById('login-err');
-  const emailInp = document.getElementById('login-email');
-  const passInp  = document.getElementById('login-pass');
-
-  const account = ACCOUNTS.find(a => a.email === email && a.pass === pass);
-
-  if (!account) {
-    _failCount++;
-    errEl.classList.add('show');
-    emailInp.classList.add('login-error');
-    passInp.classList.add('login-error');
-    passInp.value = '';
-    passInp.focus();
-
-    const left = MAX_ATTEMPTS - _failCount;
-    if (_failCount >= MAX_ATTEMPTS) {
-      startLockout();
-    } else {
-      errEl.textContent = `E-mail ou senha incorretos. ${left} tentativa${left > 1 ? 's' : ''} restante${left > 1 ? 's' : ''}.`;
-    }
-    logActivity('login', '❌ Falha no login', `Tentativa com e-mail: ${email || '(vazio)'}`, 'desconhecido');
-    return;
-  }
-
-  // Success
-  _failCount = 0;
-  errEl.classList.remove('show');
-  errEl.textContent = 'E-mail ou senha incorretos. Tente novamente.';
-  emailInp.classList.remove('login-error');
-  passInp.classList.remove('login-error');
-
-  currentUser = account;
-  document.getElementById('login-screen').classList.add('hidden');
-
-  const roleTag = document.getElementById('user-role-tag');
-  roleTag.textContent = account.label;
-  if (account.role === 'admin') roleTag.classList.add('admin');
-
-  // Show log button only for admin
-  if (account.role === 'admin') {
-    document.getElementById('log-open-btn').style.display = '';
-  }
-
-  applyRoleRestrictions();
-  buildMobileNav();
-  resetSessionTimer();
-
-  logActivity('login', '✅ Login realizado', `Acesso como ${account.role === 'admin' ? 'Administrador' : 'Visualizador'}`, account.label);
-
-  if (!window._appInitialized) {
-    window._appInitialized = true;
-    document.getElementById('db-loader').style.display = 'flex';
-    initApp();
-  }
-}
-
-function doLogout(expired = false) {
-  if (currentUser && !expired) {
-    logActivity('logout', '🚪 Logout', 'Usuário encerrou a sessão', currentUser.label);
-  }
-  currentUser = null;
-  _viewerMode = false;
-  clearTimeout(_sessionTimer);
-  clearTimeout(_sessionWarnTmr);
-  clearInterval(_warnCountdown);
-  document.getElementById('session-warn').classList.remove('show');
-  document.getElementById('login-email').value = '';
-  document.getElementById('login-pass').value  = '';
-  document.getElementById('login-pass').type   = 'password';
-  document.getElementById('pass-eye').textContent = '👁';
-  document.getElementById('login-err').classList.remove('show');
-  document.getElementById('login-screen').classList.remove('hidden');
-  document.getElementById('user-role-tag').textContent = '';
-  document.getElementById('user-role-tag').classList.remove('admin');
-  document.getElementById('log-open-btn').style.display = 'none';
-  document.getElementById('log-panel').classList.remove('open');
-  if (expired) toast('⏱ Sessão expirada. Faça login novamente.', 'error');
-}
-
-function applyRoleRestrictions() {
-  if (!currentUser) return;
-  const isViewer = currentUser.role === 'viewer';
-  document.querySelectorAll('.nav-btn').forEach(btn => {
-    const attrOnclick = btn.getAttribute('onclick') || '';
-    const isRestricted = ADMIN_ONLY_PAGES.some(p => attrOnclick.includes("'"+p+"'") || attrOnclick.includes('"'+p+'"'));
-    if (isRestricted && isViewer) {
-      btn.classList.add('locked');
-      btn._lockedHandler = (e) => { e.stopImmediatePropagation(); e.preventDefault(); toast('⛔ Acesso restrito ao Administrador', 'error'); };
-      btn.addEventListener('click', btn._lockedHandler, true);
-    } else {
-      btn.classList.remove('locked');
-      if (btn._lockedHandler) {
-        btn.removeEventListener('click', btn._lockedHandler, true);
-        btn._lockedHandler = null;
-      }
-    }
-  });
-  _viewerMode = isViewer;
-}
-
-function checkAuth() {
-  if (!currentUser) { toast('⛔ Faça login para continuar', 'error'); return false; }
-  return true;
-}
-
-function checkAdmin() {
-  if (!currentUser || currentUser.role !== 'admin') {
-    toast('⛔ Ação restrita ao Administrador', 'error');
-    return false;
-  }
-  return true;
-}
-
-// ══════════════════════════════════════════════
+// ==============================================
 //  DATA & STATE
-// ══════════════════════════════════════════════
+// ==============================================
 const STORAGE_KEY = 'banho_v3';
 const COLORS = { Niquel:'#0366a5', Ouro:'#a07010', Cromo:'#3eac48', Estanho:'#84b3cb' };
 const MAT_PROCS = {
@@ -1593,7 +919,7 @@ const SEED_BASE = {
   Estanho: { Rotativo: 0.000272802494, Amarrado: 0.000272802494, hist: [{date:'2024-01-01',val:0.000240},{date:'2024-06-01',val:0.000255},{date:'2025-01-01',val:0.000265},{date:'2025-06-01',val:0.000272802494}] }
 };
 
-// ── FIREBASE SETUP ──
+// -- FIREBASE SETUP --
 const firebaseConfig = {
   apiKey: "AIzaSyDIBpSGIbaaybjvMkMd4kQl6LXT316DABs",
   authDomain: "aqua-2-9245d.firebaseapp.com",
@@ -1632,7 +958,7 @@ function saveState() {
   }, 500);
 }
 
-// ── HELPERS ──
+// -- HELPERS --
 const pct = (a,b) => a>0 ? ((b-a)/a*100) : null;
 const BRL = (v,d=2) => 'R$ '+(v||0).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
 const BRL4 = v => BRL(v,4);
@@ -1651,85 +977,33 @@ const fmtDate = d => {
   return new Date(d+'T00:00').toLocaleDateString('pt-BR');
 };
 
-// ── TOAST ──
+// -- TOAST --
 function toast(msg, type='success') {
   const el = document.getElementById('toast');
   el.textContent = msg; el.className = `toast ${type} show`;
   setTimeout(() => el.classList.remove('show'), 2800);
 }
 
-// ── MODAL ──
+// -- MODAL --
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 document.addEventListener('keydown', e => { if(e.key==='Escape') document.querySelectorAll('.modal-overlay.open').forEach(m=>m.classList.remove('open')); });
 
-// ── NAV ──
-// ── MOBILE NAV ──
-let _mobileNavOpen = false;
-function toggleMobileNav() {
-  _mobileNavOpen = !_mobileNavOpen;
-  const drawer = document.getElementById('nav-drawer');
-  const btn    = document.getElementById('hamburger-btn');
-  btn.classList.toggle('open', _mobileNavOpen);
-  drawer.style.display = _mobileNavOpen ? 'block' : 'none';
-}
-function closeMobileNav() {
-  _mobileNavOpen = false;
-  const drawer = document.getElementById('nav-drawer');
-  const btn    = document.getElementById('hamburger-btn');
-  if (btn)    btn.classList.remove('open');
-  if (drawer) drawer.style.display = 'none';
-}
-function buildMobileNav() {
-  const pages = [
-    { id:'dashboard', label:'📊 Dashboard' },
-    { id:'produtos',  label:'🔩 Produtos'  },
-    { id:'base',      label:'📈 Base de Valores', adminOnly: true },
-    { id:'simulador', label:'🧮 Simulador' },
-    { id:'evolutize', label:'🔗 Evolutize ERP' },
-    { id:'cadastro',  label:'➕ Cadastrar Peça',  adminOnly: true },
-  ];
-  const drawer = document.getElementById('nav-drawer');
-  if (!drawer) return;
-  drawer.innerHTML = pages.map(p => {
-    const locked = p.adminOnly && _viewerMode ? 'locked' : '';
-    return `<button class="nav-btn ${locked}" onclick="mobileNav('${p.id}',this)">${p.label}</button>`;
-  }).join('');
-}
-function mobileNav(page, btn) {
-  closeMobileNav();
-  // find matching desktop nav button and delegate
-  const desktopBtns = document.querySelectorAll('#main-nav .nav-btn');
-  const pages = ['dashboard','produtos','base','simulador','evolutize','cadastro'];
-  const idx = pages.indexOf(page);
-  if (idx >= 0 && desktopBtns[idx]) nav(page, desktopBtns[idx]);
-}
-// Close drawer when clicking outside
-document.addEventListener('click', e => {
-  if (_mobileNavOpen &&
-      !e.target.closest('#nav-drawer') &&
-      !e.target.closest('#hamburger-btn')) {
-    closeMobileNav();
-  }
-});
-
+// -- NAV --
 function nav(page, btn) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   btn.classList.add('active');
-  // sync mobile drawer active state
-  if (document.getElementById('nav-drawer')) buildMobileNav();
   if(page==='dashboard') renderDashboard();
   if(page==='produtos')  renderTable();
   if(page==='base')      renderBase();
   if(page==='simulador') simRenderItems();
   if(page==='cadastro')  cadPreview();
-  if(page==='evolutize') evoRender();
 }
 
-// ══════════════════════════════════════════════
+// ==============================================
 //  DASHBOARD
-// ══════════════════════════════════════════════
+// ==============================================
 function renderDashboard() {
   const P = STATE.products;
   const totalFcVal = P.reduce((s,p)=>s+p.forecast30*p.custo_atual,0);
@@ -1747,206 +1021,71 @@ function renderDashboard() {
   `;
   document.getElementById('hdr-badge').textContent = P.length + ' peças';
 
-  // Donut — interactive
+  // Donut
   const canvas = document.getElementById('donutCanvas');
   const ctx = canvas.getContext('2d');
-  const cx = 90, cy = 90, R = 78, r = 42;
   const counts = mats.map(m=>P.filter(p=>p.material===m).length);
-  const total = counts.reduce((a,b)=>a+b,0)||1;
-  let _donutAngles = [];
-  ctx.clearRect(0,0,180,180);
+  const total = counts.reduce((a,b)=>a+b,0);
+  ctx.clearRect(0,0,140,140);
   let ang = -Math.PI/2;
   mats.forEach((m,i)=>{
     const sl = (counts[i]/total)*2*Math.PI;
-    _donutAngles.push({start:ang, end:ang+sl, mat:m, count:counts[i], pct:(counts[i]/total*100)});
-    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,ang,ang+sl); ctx.closePath();
-    ctx.fillStyle = COLORS[m]; ctx.fill(); ang += sl;
+    ctx.beginPath(); ctx.moveTo(70,70); ctx.arc(70,70,62,ang,ang+sl); ctx.closePath();
+    ctx.fillStyle=COLORS[m]; ctx.fill(); ang+=sl;
   });
-  // hole
-  ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.fillStyle='#fff'; ctx.fill();
-  // center text
-  ctx.fillStyle='#0f1e2e'; ctx.font='bold 18px Barlow,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText(total, cx, cy-7);
-  ctx.font='10px Barlow,sans-serif'; ctx.fillStyle='#556678';
-  ctx.fillText('peças', cx, cy+9);
+  ctx.beginPath(); ctx.arc(70,70,32,0,2*Math.PI); ctx.fillStyle='#ffffff'; ctx.fill();
 
-  // Donut tooltip on hover
-  canvas.onmousemove = function(e) {
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left - cx, my = e.clientY - rect.top - cy;
-    const dist = Math.sqrt(mx*mx+my*my);
-    if (dist < r || dist > R) { showTip(null); return; }
-    const angle = Math.atan2(my, mx);
-    const normAngle = angle < -Math.PI/2 ? angle + 2*Math.PI : angle;
-    const seg = _donutAngles.find(s => normAngle >= s.start && normAngle < s.end);
-    if (seg) showTip(`<b>${seg.mat}</b><br>${seg.count} peças &nbsp;·&nbsp; ${seg.pct.toFixed(1)}%`, e.clientX, e.clientY);
-    else showTip(null);
-  };
-  canvas.onmouseleave = () => showTip(null);
+  document.getElementById('donut-legend').innerHTML = mats.map((m,i)=>
+    `<div class="leg-row"><div class="leg-label"><div class="leg-dot" style="background:${COLORS[m]}"></div>${m}</div><div class="leg-val">${counts[i]}</div></div>`
+  ).join('');
 
-  document.getElementById('donut-legend').innerHTML = mats.map((m,i)=>{
-    const pctVal = total > 0 ? (counts[i]/total*100).toFixed(1) : '0.0';
-    return `<div class="leg-row"><div class="leg-label"><div class="leg-dot" style="background:${COLORS[m]}"></div>${m}</div><div class="leg-val">${counts[i]} <span style="color:var(--text2);font-size:0.65rem">(${pctVal}%)</span></div></div>`;
-  }).join('');
-
-  // Top forecast bars — interactive
+  // Top forecast
   const topF = [...P].sort((a,b)=>b.forecast30-a.forecast30).slice(0,10);
   const maxF = topF[0]?.forecast30||1;
-  document.getElementById('top-forecast-bars').innerHTML = topF.map(p=>{
-    const pctW = (p.forecast30/maxF*100).toFixed(1);
-    return `<div class="bar-row" onmouseenter="showTip('<b>${p.cod}</b><br>${p.desc}<br>${p.forecast30.toLocaleString('pt-BR')} un. &nbsp;·&nbsp; ${pctW}% do máx',event.clientX,event.clientY)" onmouseleave="showTip(null)">
-      <div class="bar-lbl mono" title="${p.desc}">${p.cod}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${pctW}%;background:${COLORS[p.material]}"></div></div>
-      <div class="bar-num">${p.forecast30.toLocaleString('pt-BR')}</div>
-    </div>`;
-  }).join('');
+  document.getElementById('top-forecast-bars').innerHTML = topF.map(p=>
+    `<div class="bar-row"><div class="bar-lbl mono" title="${p.desc}">${p.cod}</div><div class="bar-track"><div class="bar-fill" style="width:${p.forecast30/maxF*100}%;background:${COLORS[p.material]}"></div></div><div class="bar-num">${p.forecast30.toLocaleString('pt-BR')}</div></div>`
+  ).join('');
 
-  // Val by mat bars — interactive
+  // Val by mat
   const maxV = Math.max(...matVals)||1;
-  document.getElementById('val-mat-bars').innerHTML = mats.map((m,i)=>{
-    const pctW = (matVals[i]/maxV*100).toFixed(1);
-    return `<div class="bar-row" onmouseenter="showTip('<b>${m}</b><br>${BRL(matVals[i])}<br>${pctW}% do total',event.clientX,event.clientY)" onmouseleave="showTip(null)">
-      <div class="bar-lbl">${m}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${pctW}%;background:${COLORS[m]}"></div></div>
-      <div class="bar-num">${BRL(matVals[i])}</div>
-    </div>`;
-  }).join('');
+  document.getElementById('val-mat-bars').innerHTML = mats.map((m,i)=>
+    `<div class="bar-row"><div class="bar-lbl">${m}</div><div class="bar-track"><div class="bar-fill" style="width:${matVals[i]/maxV*100}%;background:${COLORS[m]}"></div></div><div class="bar-num">${BRL(matVals[i])}</div></div>`
+  ).join('');
 
-  // New charts
-  renderMatDistChart(P, mats, counts, total);
-  renderTaxaAtualChart(mats);
+  // Sparklines
+  mats.forEach(m=>renderSparkline(m));
 }
 
-// ── CHART: Material Distribution (horizontal bar) ──
-function renderMatDistChart(P, mats, counts, total) {
-  const el = document.getElementById('chart-mat-dist');
-  if (!el) return;
-  const maxC = Math.max(...counts) || 1;
-  el.innerHTML = mats.map((m, i) => {
-    const pct = total > 0 ? (counts[i]/total*100).toFixed(1) : '0.0';
-    const w = (counts[i]/maxC*100).toFixed(1);
-    const proc = ['Rotativo','Amarrado'].map(pr => {
-      const n = P.filter(p => p.material===m && p.processo===pr).length;
-      return n > 0 ? `${pr}: ${n}` : null;
-    }).filter(Boolean).join(' · ');
-    return `<div class="bar-row" style="margin-bottom:10px"
-      onmouseenter="showTip('<b>${m}</b><br>${counts[i]} peças &nbsp;·&nbsp; ${pct}% do total<br><span style=color:#aec0d0>${proc}</span>',event.clientX,event.clientY)"
-      onmouseleave="showTip(null)">
-      <div class="bar-lbl" style="width:72px;font-weight:700;color:${COLORS[m]}">${m}</div>
-      <div class="bar-track" style="height:18px;border-radius:4px">
-        <div class="bar-fill" style="width:${w}%;background:${COLORS[m]};height:100%;border-radius:4px;transition:width 0.8s cubic-bezier(.4,0,.2,1)"></div>
-      </div>
-      <div style="min-width:90px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--text2)">
-        <span style="font-weight:700;color:${COLORS[m]}">${counts[i]}</span> peças &nbsp;<span style="opacity:.6">${pct}%</span>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ── CHART: Última taxa por material (grouped bar) ──
-function renderTaxaAtualChart(mats) {
-  const el = document.getElementById('chart-taxa-atual');
-  if (!el) return;
-  const procs = ['Rotativo','Amarrado'];
-  const procColors = { Rotativo: '#0366a5', Amarrado: '#3eac48' };
-
-  // Build rows: one per material, with two bars (Rotativo / Amarrado)
-  let rows = [];
-  mats.forEach(m => {
-    procs.forEach(pr => {
-      const taxa = STATE.base[m]?.[pr];
-      if (taxa === null || taxa === undefined) return;
-      rows.push({ mat: m, proc: pr, taxa });
-    });
+function renderSparkline(mat) {
+  const hist = STATE.base[mat].hist;
+  const el = document.getElementById('spark-'+mat);
+  if(!el||!hist||hist.length<2) return;
+  const vals = hist.map(h=>h.val);
+  const minV = Math.min(...vals), maxV = Math.max(...vals);
+  const rng = maxV-minV||maxV*0.1||0.0001;
+  const W=el.offsetWidth||300, H=90;
+  const pts = vals.map((v,i)=>{
+    const x = i/(vals.length-1)*(W-20)+10;
+    const y = H-10-(v-minV)/rng*(H-20);
+    return [x,y];
   });
-
-  const maxT = Math.max(...rows.map(r => r.taxa)) || 1;
-
-  el.innerHTML = rows.map(r => {
-    const w = (r.taxa / maxT * 100).toFixed(1);
-    const hist = STATE.base[r.mat]?.hist?.filter(h => h.motivo?.includes(r.proc)) || [];
-    const lastDate = hist.length ? fmtDate(hist[hist.length-1].date) : '—';
-    return `<div class="bar-row" style="margin-bottom:8px"
-      onmouseenter="showTip('<b>${r.mat} · ${r.proc}</b><br>Taxa: <b>${r.taxa.toExponential(4)} R$/mm²</b><br>Última atualização: ${lastDate}',event.clientX,event.clientY)"
-      onmouseleave="showTip(null)">
-      <div style="width:108px;font-size:0.7rem;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-        <span style="font-weight:700;color:${COLORS[r.mat]}">${r.mat}</span>
-        <span style="opacity:.7"> · ${r.proc}</span>
-      </div>
-      <div class="bar-track" style="height:14px;border-radius:3px">
-        <div class="bar-fill" style="width:${w}%;height:100%;border-radius:3px;background:${procColors[r.proc]};opacity:${r.proc==='Amarrado'?'0.7':'1'};transition:width 0.8s cubic-bezier(.4,0,.2,1)"></div>
-      </div>
-      <div style="min-width:100px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--text2)">
-        ${r.taxa.toExponential(3)}
-      </div>
-    </div>`;
-  }).join('');
-
-  // Legend
-  el.innerHTML += `<div style="display:flex;gap:14px;margin-top:10px;padding-top:8px;border-top:1px solid var(--border)">
-    ${procs.map(pr => `<div style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:var(--text2)">
-      <div style="width:10px;height:10px;border-radius:2px;background:${procColors[pr]};opacity:${pr==='Amarrado'?'0.7':'1'}"></div>${pr}
-    </div>`).join('')}
-  </div>`;
+  const path = pts.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  const area = path+`L${pts[pts.length-1][0]},${H} L${pts[0][0]},${H} Z`;
+  el.innerHTML = `<svg class="sparkline" viewBox="0 0 ${W} ${H}">
+    <defs><linearGradient id="sg${mat}" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${COLORS[mat]}" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="${COLORS[mat]}" stop-opacity="0"/>
+    </linearGradient></defs>
+    <path d="${area}" fill="url(#sg${mat})"/>
+    <path d="${path}" fill="none" stroke="${COLORS[mat]}" stroke-width="2" stroke-linejoin="round"/>
+    ${pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="3" fill="${COLORS[mat]}" title="${fmtDate(hist[i].date)}: ${hist[i].val}"/>`).join('')}
+    <text x="${pts[pts.length-1][0]}" y="${pts[pts.length-1][1]-8}" fill="${COLORS[mat]}" font-size="10" text-anchor="middle">${vals[vals.length-1].toExponential(3)}</text>
+  </svg>`;
 }
 
-// ── TOOLTIP HELPER ──
-function showTip(html, x, y) {
-  const tip = document.getElementById('chart-tooltip');
-  if (!html) { tip.style.display = 'none'; return; }
-  tip.innerHTML = html;
-  tip.style.display = 'block';
-  const offset = 14;
-  let left = x + offset, top = y + offset;
-  if (left + 200 > window.innerWidth) left = x - 200 - offset;
-  if (top + 80 > window.innerHeight) top = y - 80;
-  tip.style.left = left + 'px';
-  tip.style.top  = top  + 'px';
-}
-
-// ── EDIT MODAL IMAGE HANDLING ──
-let _editImgData = null;
-
-function handleEditImgSelect(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  if (file.size > 2*1024*1024) { toast('Imagem muito grande (máx 2MB)', 'error'); return; }
-  const reader = new FileReader();
-  reader.onload = ev => {
-    _editImgData = ev.target.result;
-    _applyEditImgPreview(_editImgData);
-  };
-  reader.readAsDataURL(file);
-}
-
-function handleEditImgDrop(e) {
-  e.preventDefault();
-  document.getElementById('edit-upload-area').classList.remove('drag');
-  const file = e.dataTransfer.files[0];
-  if (file && file.type.startsWith('image/')) handleEditImgSelect({target:{files:[file]}});
-}
-
-function _applyEditImgPreview(src) {
-  const img = document.getElementById('edit-img-preview');
-  const ph  = document.getElementById('edit-img-placeholder');
-  const rm  = document.getElementById('edit-img-remove');
-  img.src = src; img.style.display = 'block'; ph.style.display = 'none';
-  rm.style.display = 'block';
-}
-
-function removeEditImg() {
-  _editImgData = '__remove__';
-  const img = document.getElementById('edit-img-preview');
-  const ph  = document.getElementById('edit-img-placeholder');
-  const rm  = document.getElementById('edit-img-remove');
-  img.src = ''; img.style.display = 'none'; ph.style.display = '';
-  rm.style.display = 'none';
-  document.getElementById('edit-img-input').value = '';
-}
-
-// ══════════════════════════════════════════════
+// ==============================================
 //  TABLE
-// ══════════════════════════════════════════════
+// ==============================================
 function getFiltered() {
   return STATE.products.filter(p=>{
     const s = STATE.search;
@@ -1976,17 +1115,17 @@ function renderTable() {
     const sparkHtml = hist.length>1 ? `<div class="mini-spark">${hist.slice(-6).map(h=>{const maxh=Math.max(...hist.map(x=>x.val));return `<div class="spark-bar" style="height:${Math.max(3,h.val/maxh*22)}px"></div>`}).join('')}</div>` : '<span class="c-muted" style="font-size:0.7rem">sem hist.</span>';
     const imgHtml = p.img ? `<div class="img-thumb"><img src="${p.img}" alt=""></div>` : `<div class="img-thumb" style="font-size:1rem">⚙</div>`;
     return `<tr onclick="openDetail('${p.cod}')" style="position:relative">
-      <td data-label="">${imgHtml}</td>
-      <td data-label="Código" class="mono c-muted" style="font-size:0.72rem">${p.cod}</td>
-      <td data-label="Descrição" style="max-width:240px;font-size:0.77rem">${p.desc}</td>
-      <td data-label="Material"><span class="badge b-${p.material}">${p.material}</span></td>
-      <td data-label="Processo"><span class="badge b-${p.processo}">${p.processo}</span></td>
-      <td data-label="Área mm²" class="mono">${p.area.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
-      <td data-label="Forecast 30d" class="mono">${p.forecast30.toLocaleString('pt-BR')}</td>
-      <td data-label="Custo Atual" class="mono c-accent">${BRL4(p.custo_atual)}</td>
-      <td data-label="Variação">${vHtml}</td>
-      <td data-label="Histórico">${sparkHtml}</td>
-      <td data-label="Ações" onclick="event.stopPropagation()">
+      <td>${imgHtml}</td>
+      <td class="mono c-muted" style="font-size:0.72rem">${p.cod}</td>
+      <td style="max-width:240px;font-size:0.77rem">${p.desc}</td>
+      <td><span class="badge b-${p.material}">${p.material}</span></td>
+      <td><span class="badge b-${p.processo}">${p.processo}</span></td>
+      <td class="mono">${p.area.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})}</td>
+      <td class="mono">${p.forecast30.toLocaleString('pt-BR')}</td>
+      <td class="mono c-accent">${BRL4(p.custo_atual)}</td>
+      <td>${vHtml}</td>
+      <td>${sparkHtml}</td>
+      <td onclick="event.stopPropagation()">
         <div style="display:flex;gap:4px">
           <button title="Editar" onclick="editProduct('${p.cod}')" style="padding:4px 7px;border-radius:5px;border:1px solid var(--border);background:var(--surf2);color:var(--b1);cursor:pointer;font-size:0.8rem" onmouseover="this.style.background='var(--b1)';this.style.color='#fff'" onmouseout="this.style.background='var(--surf2)';this.style.color='var(--b1)'">✏️</button>
           <button title="Duplicar" onclick="duplicateProduct('${p.cod}')" style="padding:4px 7px;border-radius:5px;border:1px solid var(--border);background:var(--surf2);color:var(--b2);cursor:pointer;font-size:0.8rem" onmouseover="this.style.background='var(--b2)';this.style.color='#fff'" onmouseout="this.style.background='var(--surf2)';this.style.color='var(--b2)'">⧉</button>
@@ -2021,7 +1160,7 @@ function sortBy(k){
   renderTable();
 }
 
-// ── DETAIL MODAL ──
+// -- DETAIL MODAL --
 function openDetail(cod) {
   const p = STATE.products.find(x=>x.cod===cod);
   if(!p) return;
@@ -2074,9 +1213,9 @@ function openDetail(cod) {
   document.getElementById('detail-modal').classList.add('open');
 }
 
-// ══════════════════════════════════════════════
+// ==============================================
 //  BASE DE VALORES
-// ══════════════════════════════════════════════
+// ==============================================
 function renderBase() {
   const mats = ['Niquel','Ouro','Cromo','Estanho'];
   document.getElementById('base-grid').innerHTML = mats.map(m=>{
@@ -2156,7 +1295,6 @@ function calcUpdatePreview() {
 }
 
 function applyUpdate() {
-  if (!checkAdmin()) return;
   const mat  = document.getElementById('upd-mat').value;
   const proc = document.getElementById('upd-proc').value;
   const tipo = document.getElementById('upd-tipo').value;
@@ -2198,7 +1336,6 @@ function applyUpdate() {
       });
       saveState();
       renderBase();
-      logActivity('update', '⚡ Taxa atualizada', `Material: ${mat} · Ajuste: ${tipo === 'pct' ? (val > 0 ? '+' : '') + val + '%' : 'valor absoluto ' + val} (${proc === 'ambos' ? 'Rotativo + Amarrado' : proc})`, currentUser?.label);
       toast(`✓ ${mat} atualizado — ${STATE.products.filter(p=>p.material===mat).length} peças recalculadas`);
       document.getElementById('upd-val').value='';
       document.getElementById('upd-preview').style.display='none';
@@ -2227,9 +1364,9 @@ function deleteBaseHist(mat, idx) {
   );
 }
 
-// ══════════════════════════════════════════════
+// ==============================================
 //  SIMULADOR — MULTI-PRODUTO
-// ══════════════════════════════════════════════
+// ==============================================
 let simItems = []; // [{cod, qty, product}]
 
 function simMaterialChange() {
@@ -2467,11 +1604,10 @@ function simLoad(cod) { simAddProduct(cod); }
 function simClear() { simClearAll(); }
 function simCalc() { simRecalcAll(); }
 
-// ══════════════════════════════════════════════
+// ==============================================
 //  PRODUCT ACTIONS: DELETE, DUPLICATE, EDIT
-// ══════════════════════════════════════════════
+// ==============================================
 function deleteProduct(cod) {
-  if (!checkAdmin()) return;
   const p = STATE.products.find(x => x.cod === cod);
   if (!p) return;
   showConfirm(
@@ -2483,14 +1619,12 @@ function deleteProduct(cod) {
       saveState();
       renderTable();
       renderDashboard();
-      logActivity('delete', '🗑 Produto apagado', `Código: ${cod} — ${p.desc}`, currentUser?.label);
       toast(`✓ Produto ${cod} apagado`, 'info');
     }
   );
 }
 
 function duplicateProduct(cod) {
-  if (!checkAdmin()) return;
   const p = STATE.products.find(x => x.cod === cod);
   if (!p) return;
   // Generate new code
@@ -2504,7 +1638,6 @@ function duplicateProduct(cod) {
   STATE.products.push(clone);
   saveState();
   renderTable();
-  logActivity('duplicate', '📋 Produto duplicado', `Original: ${cod} → Cópia: ${newCod}`, currentUser?.label);
   toast(`✓ Produto duplicado como ${newCod} — use Editar para alterar os dados`, 'success');
   // Auto-open edit modal for the copy
   setTimeout(() => editProduct(newCod), 300);
@@ -2512,11 +1645,9 @@ function duplicateProduct(cod) {
 
 let _editCod = null;
 function editProduct(cod) {
-  if (!checkAdmin()) return;
   const p = STATE.products.find(x => x.cod === cod);
   if (!p) return;
   _editCod = cod;
-  _editImgData = null;
   document.getElementById('edit-modal-cod').textContent = cod;
   document.getElementById('edit-cod').value = cod;
   document.getElementById('edit-mat').value = p.material;
@@ -2527,20 +1658,10 @@ function editProduct(cod) {
   document.getElementById('edit-forecast').value = p.forecast30 || 0;
   document.getElementById('edit-valor').value = '';
   document.getElementById('edit-motivo').value = '';
-  document.getElementById('edit-img-input').value = '';
-  // Load existing image
-  if (p.img) {
-    _applyEditImgPreview(p.img);
-  } else {
-    document.getElementById('edit-img-preview').style.display = 'none';
-    document.getElementById('edit-img-placeholder').style.display = '';
-    document.getElementById('edit-img-remove').style.display = 'none';
-  }
   document.getElementById('edit-modal').classList.add('open');
 }
 
 function editSalvar() {
-  if (!checkAdmin()) return;
   if (!_editCod) return;
   const p = STATE.products.find(x => x.cod === _editCod);
   if (!p) return;
@@ -2571,15 +1692,12 @@ function editSalvar() {
       p.peso = parseFloat(document.getElementById('edit-peso').value) || p.peso;
       p.forecast30 = parseInt(document.getElementById('edit-forecast').value) || 0;
       p.custo_atual = parseFloat(novoCusto.toFixed(6));
-      if (_editImgData === '__remove__') p.img = null;
-      else if (_editImgData) p.img = _editImgData;
       p.hist = p.hist || [];
       p.hist.push({date: todayDateTime(), val: p.custo_atual, motivo});
       saveState();
       renderTable();
       renderDashboard();
       closeModal('edit-modal');
-      logActivity('edit', '✏️ Produto editado', `Código: ${_editCod} — Motivo: ${motivo || 'não informado'}`, currentUser?.label);
       toast(`✓ Produto ${_editCod} atualizado com sucesso`, 'success');
     }
   );
@@ -2594,9 +1712,9 @@ function showConfirm(title, body, okLabel, onOk) {
   document.getElementById('confirm-modal').classList.add('open');
 }
 
-// ══════════════════════════════════════════════
+// ==============================================
 //  CADASTRO
-// ══════════════════════════════════════════════
+// ==============================================
 let cadImgData = null;
 
 function handleImgSelect(e) {
@@ -2659,7 +1777,6 @@ function cadPreview() {
 }
 
 function cadSalvar() {
-  if (!checkAdmin()) return;
   const cod  = document.getElementById('cad-cod').value.trim();
   const desc = document.getElementById('cad-desc').value.trim();
   const mat  = document.getElementById('cad-mat').value;
@@ -2684,7 +1801,6 @@ function cadSalvar() {
 
   STATE.products.push(nova);
   saveState();
-  logActivity('create', '➕ Peça cadastrada', `Código: ${cod} — ${desc} (${mat} · ${proc})`, currentUser?.label);
   toast(`✓ Peça ${cod} cadastrada com sucesso!`,'success');
   cadLimpar();
   document.getElementById('hdr-badge').textContent = STATE.products.length + ' peças';
@@ -2703,174 +1819,391 @@ function cadLimpar() {
   cadImgData=null; cadPreview();
 }
 
-// ══════════════════════════════════════════════
-//  INIT — Load from Firebase then render
-// ══════════════════════════════════════════════
-async function initApp() {
+// ==============================================
+
+// ==============================================
+//  AUTH
+// ==============================================
+const ROLES = {
+  'pcp@teste.com':       'admin',
+  'qualidade@teste.com': 'viewer'
+};
+let CURRENT_ROLE = null;
+firebase.auth();
+const auth = firebase.auth();
+
+function isAdmin() { return CURRENT_ROLE === 'admin'; }
+
+function showLogin() {
+  const ls = document.getElementById('login-screen');
+  ls.style.display = 'flex';
+  document.getElementById('app-root') && (document.getElementById('app-root').style.display = 'none');
+}
+function hideLogin() {
+  document.getElementById('login-screen').style.display = 'none';
+  const ar = document.getElementById('app-root');
+  if (ar) ar.style.display = '';
+}
+function showLoginError(msg) {
+  const el = document.getElementById('login-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function doLogin() {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn      = document.getElementById('login-btn');
+  document.getElementById('login-error').style.display = 'none';
+  if (!email || !password) { showLoginError('Preencha e-mail e senha.'); return; }
+  if (!ROLES[email]) { showLoginError('Acesso não autorizado para este e-mail.'); return; }
+  btn.textContent = 'Entrando...';
+  btn.disabled = true;
   try {
-    const snap = await DOC_REF.get();
-    if (snap.exists) {
-      const data = snap.data();
-      if (data.products && data.products.length) STATE.products = data.products;
-    document.getElementById('hdr-badge').textContent = STATE.products.length + ' peças';
-      if (data.base)            STATE.base = data.base;
-      if (data.custoProcesso)   STATE.custoProcesso = data.custoProcesso;
-    }
+    await auth.signInWithEmailAndPassword(email, password);
   } catch(e) {
-    console.error('Firebase load error:', e);
+    btn.textContent = 'Entrar';
+    btn.disabled = false;
+    const msgs = {
+      'auth/wrong-password':    'Senha incorreta.',
+      'auth/user-not-found':    'E-mail não encontrado.',
+      'auth/invalid-credential':'Credenciais inválidas.',
+      'auth/too-many-requests': 'Muitas tentativas. Aguarde.'
+    };
+    showLoginError(msgs[e.code] || 'Erro ao entrar: ' + e.message);
+  }
+}
+
+async function doLogout() {
+  await auth.signOut();
+}
+
+function updateUserUI(user) {
+  const role = ROLES[user.email] || 'viewer';
+  const badge = document.getElementById('role-badge');
+  const emailLbl = document.getElementById('user-email-lbl');
+  const logoutBtn = document.getElementById('logout-btn');
+  if (badge) {
+    badge.textContent = role === 'admin' ? 'ADMIN' : 'VIEWER';
+    badge.style.background = role === 'admin' ? 'rgba(62,172,72,0.25)' : 'rgba(132,179,203,0.25)';
+    badge.style.color = role === 'admin' ? '#3eac48' : '#84b3cb';
+    badge.style.border = role === 'admin' ? '1px solid rgba(62,172,72,0.4)' : '1px solid rgba(132,179,203,0.4)';
+    badge.style.display = '';
+  }
+  if (emailLbl) { emailLbl.textContent = user.email; emailLbl.style.display = ''; }
+  if (logoutBtn) logoutBtn.style.display = '';
+}
+
+function applyRoleUI() {
+  const cadBtn = document.getElementById('nav-cadastro-btn');
+  if (cadBtn) cadBtn.style.display = isAdmin() ? '' : 'none';
+  // Hide edit/delete buttons for viewers
+  document.querySelectorAll('.row-edit-btn,.row-del-btn,.row-dup-btn,.btn-base-save').forEach(el => {
+    el.style.display = isAdmin() ? '' : 'none';
+  });
+  const btnNova = document.getElementById('btn-nova-ordem');
+  if (btnNova) btnNova.style.display = isAdmin() ? '' : 'none';
+}
+
+// ==============================================
+//  ORDENS DE BANHO
+// ==============================================
+function todayStr() { return new Date().toISOString().slice(0,10); }
+
+function renderDashboard() {
+  const ordens = STATE.ordens || [];
+  const hoje = todayStr();
+  const seteDias = new Date(Date.now() - 7*24*60*60*1000).toISOString().slice(0,10);
+  const andamento = ordens.filter(function(o){ return o.status === 'andamento'; });
+  const fila      = ordens.filter(function(o){ return o.status === 'fila'; });
+  const concHoje  = ordens.filter(function(o){ return o.status === 'concluido' && (o.concluidoEm||'').slice(0,10) === hoje; });
+  const hist7d    = ordens.filter(function(o){ return o.status === 'concluido' && (o.concluidoEm||'').slice(0,10) >= seteDias && (o.concluidoEm||'').slice(0,10) !== hoje; });
+  document.getElementById('kpi-andamento').textContent = andamento.length;
+  document.getElementById('kpi-fila').textContent = fila.length;
+  document.getElementById('kpi-hoje').textContent = concHoje.length;
+  document.getElementById('kpi-7d').textContent = hist7d.length;
+  if (!window._clockInterval) {
+    window._clockInterval = setInterval(function(){
+      var el = document.getElementById('dash-clock');
+      if (el) el.textContent = new Date().toLocaleTimeString('pt-BR');
+    }, 1000);
+  }
+  var clockEl = document.getElementById('dash-clock');
+  if (clockEl) clockEl.textContent = new Date().toLocaleTimeString('pt-BR');
+  var btnNova = document.getElementById('btn-nova-ordem');
+  if (btnNova) btnNova.style.display = isAdmin() ? '' : 'none';
+  function empty(txt) { return '<div class="ordem-empty">' + txt + '</div>'; }
+  document.getElementById('ordens-andamento').innerHTML = andamento.length ? andamento.map(ordemCard).join('') : empty('Nenhum banho em andamento no momento');
+  document.getElementById('ordens-fila').innerHTML      = fila.length      ? fila.map(ordemCard).join('')      : empty('Nenhuma ordem na fila');
+  document.getElementById('ordens-hoje').innerHTML      = concHoje.length  ? concHoje.map(ordemCard).join('')  : empty('Nenhum banho concluído hoje');
+  document.getElementById('ordens-7d').innerHTML        = hist7d.length    ? hist7d.map(ordemCard).join('')    : empty('Sem histórico nos últimos 7 dias');
+}
+
+function ordemCard(o) {
+  var color = COLORS[o.material] || '#556678';
+  var statusMap = {
+    andamento: '&#9679; EM ANDAMENTO',
+    fila: '&#9203; NA FILA',
+    concluido: '&#10003; CONCLUIDO'
+  };
+  var statusColors = {
+    andamento: 'var(--orange)',
+    fila: 'var(--b1)',
+    concluido: 'var(--green)'
+  };
+  var sc = statusColors[o.status] || 'var(--text2)';
+  var statusBadge = '<span style="padding:2px 9px;border-radius:20px;font-size:0.67rem;font-weight:700;color:' + sc + ';border:1px solid ' + sc + ';">' + (statusMap[o.status] || o.status) + '</span>';
+
+  var pecasHtml = '';
+  var pecas = o.pecas || [];
+  for (var pi = 0; pi < pecas.length; pi++) {
+    var p = pecas[pi];
+    var prod = null;
+    for (var qi = 0; qi < STATE.products.length; qi++) {
+      if (STATE.products[qi].cod === p.cod) { prod = STATE.products[qi]; break; }
+    }
+    var desc = prod ? prod.desc : p.cod;
+    pecasHtml += '<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;background:var(--surf2);border-radius:6px;font-size:0.78rem;margin-bottom:3px;">';
+    pecasHtml += '<span style="color:var(--text2);font-size:0.7rem;min-width:70px;">' + p.cod + '</span>';
+    pecasHtml += '<span style="font-weight:600;flex:1;">' + desc + '</span>';
+    pecasHtml += '<span style="color:' + color + ';font-weight:700;">' + p.qty + ' un.</span>';
+    pecasHtml += '</div>';
   }
 
-  // Hide loader and render app
-  document.getElementById('db-loader').style.display = 'none';
-  document.getElementById('hdr-badge').textContent = STATE.products.length + ' peças';
-  renderDashboard();
-  renderTable();
-  simRenderItems();
+  var timeHtml = '';
+  if (o.iniciadoEm) {
+    timeHtml = '<span style="font-size:0.72rem;color:var(--text2);">Iniciado: ' + fmtDate(o.iniciadoEm) + '</span>';
+  } else if (o.criadoEm) {
+    timeHtml = '<span style="font-size:0.72rem;color:var(--text2);">Criado: ' + fmtDate(o.criadoEm) + '</span>';
+  }
+  var concluidoHtml = o.concluidoEm ? '<span style="font-size:0.72rem;color:var(--green);">Concluido: ' + fmtDate(o.concluidoEm) + '</span>' : '';
+  var respHtml = o.responsavel ? '<span style="font-size:0.75rem;color:var(--text2);">&#128100; ' + o.responsavel + '</span>' : '';
+  var obsHtml = o.obs ? '<div style="font-size:0.75rem;color:var(--text2);font-style:italic;margin-top:4px;">&#128221; ' + o.obs + '</div>' : '';
 
-  // Listen for real-time changes from other users
-  DOC_REF.onSnapshot(snap => {
+  var deleteBtn = '';
+  if (isAdmin()) {
+    deleteBtn = '<button onclick="deletarOrdem(\'' + o.id + '\')" style="margin-left:auto;flex-shrink:0;padding:5px 9px;border-radius:6px;border:1px solid var(--border);background:var(--surf2);color:var(--text2);cursor:pointer;font-size:0.75rem;">&#128465;</button>';
+  }
+
+  var html = '<div class="ordem-card">';
+  html += '<div style="width:10px;height:10px;border-radius:3px;background:' + color + ';flex-shrink:0;margin-top:5px;"></div>';
+  html += '<div style="flex:1;min-width:0;">';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">';
+  html += statusBadge;
+  html += '<span style="font-weight:800;color:' + color + ';">' + o.material + '</span>';
+  html += '<span style="color:var(--text2);font-size:0.82rem;">&#183; ' + o.processo + '</span>';
+  html += respHtml + timeHtml + concluidoHtml;
+  html += '</div>';
+  html += '<div style="display:flex;flex-direction:column;">' + pecasHtml + '</div>';
+  html += obsHtml;
+  html += '</div>';
+  html += deleteBtn;
+  html += '</div>';
+  return html;
+}
+
+
+function abrirModalOrdem() {
+  if (!isAdmin()) return;
+  document.getElementById('ord-mat').value = '';
+  document.getElementById('ord-proc').innerHTML = '<option value="">Selecione o material primeiro</option>';
+  document.getElementById('ord-peca-search').value = '';
+  document.getElementById('ord-peca-qty').value = 1;
+  document.getElementById('ord-resp').value = '';
+  document.getElementById('ord-obs').value = '';
+  document.getElementById('ord-status').value = 'andamento';
+  document.getElementById('ord-peca-results').style.display = 'none';
+  document.getElementById('ord-pecas-lista').innerHTML = '';
+  window._ordPecas = [];
+  document.getElementById('ordem-modal').classList.add('open');
+}
+
+function updateOrdProc() {
+  var mat = document.getElementById('ord-mat').value;
+  var sel = document.getElementById('ord-proc');
+  if (!mat) { sel.innerHTML = '<option value="">Selecione o material primeiro</option>'; return; }
+  var procs = Object.keys(MAT_PROCS[mat]||{}).filter(function(k){ return MAT_PROCS[mat][k]; });
+  sel.innerHTML = '<option value="">Selecione...</option>' + procs.map(function(p){ return '<option>' + p + '</option>'; }).join('');
+}
+
+window._ordPecas = [];
+window._ordSelectedPeca = null;
+
+function ordSearchPeca() {
+  var q = document.getElementById('ord-peca-search').value.trim().toLowerCase();
+  var box = document.getElementById('ord-peca-results');
+  if (q.length < 1) { box.style.display = 'none'; return; }
+  var mat = document.getElementById('ord-mat').value;
+  var proc = document.getElementById('ord-proc').value;
+  var res = [];
+  for (var i = 0; i < STATE.products.length; i++) {
+    var p = STATE.products[i];
+    if ((p.cod.toLowerCase().indexOf(q) > -1 || p.desc.toLowerCase().indexOf(q) > -1) && (!mat || p.material === mat) && (!proc || p.processo === proc)) {
+      res.push(p);
+      if (res.length >= 6) break;
+    }
+  }
+  if (!res.length) {
+    box.innerHTML = '<div style="padding:10px 14px;color:var(--text2);font-size:0.8rem;">Nenhuma peca encontrada</div>';
+    box.style.display = 'block';
+    return;
+  }
+  var html = '';
+  for (var j = 0; j < res.length; j++) {
+    var p = res[j];
+        html += '<div onclick="ordSelectPeca(\'' + p.cod + '\')" style="padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">'
+    html += '<span style="font-size:0.68rem;color:var(--text2);min-width:80px;">' + p.cod + '</span>';
+    html += '<span style="font-size:0.8rem;font-weight:600;flex:1;">' + p.desc + '</span>';
+    html += '<span class="badge b-' + p.material + '">' + p.material + '</span></div>';
+  }
+  box.innerHTML = html;
+  box.style.display = 'block';
+}
+
+
+function ordSelectPeca(cod) {
+  window._ordSelectedPeca = cod;
+  var p = STATE.products.find(function(x){ return x.cod===cod; });
+  document.getElementById('ord-peca-search').value = p ? p.cod + ' - ' + p.desc : cod;
+  document.getElementById('ord-peca-results').style.display = 'none';
+}
+
+function ordAddPeca() {
+  var search = document.getElementById('ord-peca-search').value.trim();
+  var cod = window._ordSelectedPeca || search.split(' - ')[0].trim();
+  var qty = parseInt(document.getElementById('ord-peca-qty').value)||1;
+  if (!cod) { toast('Selecione uma peca primeiro','error'); return; }
+  if (window._ordPecas.find(function(x){ return x.cod===cod; })) { toast('Peca ja adicionada','error'); return; }
+  window._ordPecas.push({cod:cod, qty:qty});
+  renderOrdPecas();
+  document.getElementById('ord-peca-search').value = '';
+  document.getElementById('ord-peca-qty').value = 1;
+  window._ordSelectedPeca = null;
+}
+
+function renderOrdPecas() {
+  var html = '';
+  for (var i = 0; i < window._ordPecas.length; i++) {
+    var p = window._ordPecas[i];
+    var prod = null;
+    for (var j = 0; j < STATE.products.length; j++) {
+      if (STATE.products[j].cod === p.cod) { prod = STATE.products[j]; break; }
+    }
+    var desc = prod ? prod.desc : p.cod;
+    html += '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--surf2);border-radius:6px;font-size:0.78rem;margin-bottom:4px;">';
+    html += '<span style="color:var(--text2);font-size:0.7rem;min-width:70px;">' + p.cod + '</span>';
+    html += '<span style="flex:1;font-weight:600;">' + desc + '</span>';
+    html += '<input type="number" min="1" value="' + p.qty + '" data-idx="' + i + '" onchange="window._ordPecas[' + i + '].qty=parseInt(this.value)||1" style="width:60px;padding:3px 6px;border:1px solid var(--border);border-radius:4px;font-size:0.78rem;text-align:center;">';
+    html += '<span style="color:var(--text2);font-size:0.72rem;">un.</span>';
+    html += '<button onclick="window._ordPecas.splice(' + i + ',1);renderOrdPecas()" style="border:none;background:none;color:var(--text2);cursor:pointer;font-size:0.85rem;padding:2px 5px;">&#10005;</button>';
+    html += '</div>';
+  }
+  document.getElementById('ord-pecas-lista').innerHTML = html;
+}
+
+
+function salvarOrdem() {
+  var mat    = document.getElementById('ord-mat').value;
+  var proc   = document.getElementById('ord-proc').value;
+  var status = document.getElementById('ord-status').value;
+  if (!mat || !proc) { toast('Selecione material e processo','error'); return; }
+  if (!window._ordPecas.length) { toast('Adicione pelo menos uma peca','error'); return; }
+  var now = todayDateTime();
+  var ordem = { id:'ord_'+Date.now(), material:mat, processo:proc, pecas:window._ordPecas.slice(), responsavel:document.getElementById('ord-resp').value.trim(), obs:document.getElementById('ord-obs').value.trim(), status:status, criadoEm:now, iniciadoEm:status==='andamento'?now:null, concluidoEm:null };
+  if (!STATE.ordens) STATE.ordens = [];
+  STATE.ordens.unshift(ordem);
+  saveState();
+  closeModal('ordem-modal');
+  renderDashboard();
+  toast('Ordem registrada!', 'success');
+}
+
+function deletarOrdem(id) {
+  showConfirm('Apagar Ordem','Tem certeza que deseja apagar esta ordem?','Apagar', function(){
+    STATE.ordens = (STATE.ordens||[]).filter(function(x){ return x.id!==id; });
+    saveState();
+    renderDashboard();
+    toast('Ordem removida','info');
+  });
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#ord-peca-search') && !e.target.closest('#ord-peca-results')) {
+    var box = document.getElementById('ord-peca-results');
+    if (box) box.style.display = 'none';
+  }
+});
+
+
+//  INIT — Auth-gated load
+// ==============================================
+document.addEventListener('DOMContentLoaded', function() {
+  showLogin();
+});
+
+auth.onAuthStateChanged(function(user) {
+  if (!user) {
+    CURRENT_ROLE = null;
+    showLogin();
+    var btn = document.getElementById('login-btn');
+    if (btn) { btn.textContent = 'Entrar'; btn.disabled = false; }
+    return;
+  }
+  if (!ROLES[user.email]) {
+    auth.signOut();
+    showLogin();
+    showLoginError('Acesso nao autorizado.');
+    return;
+  }
+  CURRENT_ROLE = ROLES[user.email];
+  hideLogin();
+  updateUserUI(user);
+  applyRoleUI();
+  document.getElementById('db-loader').style.display = 'flex';
+
+  // Set a timeout in case Firebase hangs (e.g. when opened locally)
+  var loadTimeout = setTimeout(function() {
+    document.getElementById('db-loader').style.display = 'none';
+    document.getElementById('hdr-badge').textContent = STATE.products.length + ' pecas';
+    renderDashboard();
+    renderTable();
+    simRenderItems();
+  }, 6000);
+
+  DOC_REF.get().then(function(snap) {
+    clearTimeout(loadTimeout);
+    if (snap.exists) {
+      var data = snap.data();
+      if (data.products && data.products.length) STATE.products = data.products;
+      if (data.base) STATE.base = data.base;
+      if (data.custoProcesso) STATE.custoProcesso = data.custoProcesso;
+      if (data.ordens) STATE.ordens = data.ordens;
+    }
+  }).catch(function(e) {
+    clearTimeout(loadTimeout);
+    console.error('Firebase load error:', e);
+  }).finally(function() {
+    clearTimeout(loadTimeout);
+    document.getElementById('db-loader').style.display = 'none';
+    document.getElementById('hdr-badge').textContent = STATE.products.length + ' pecas';
+    renderDashboard();
+    renderTable();
+    simRenderItems();
+  });
+
+  DOC_REF.onSnapshot(function(snap) {
     if (!snap.exists) return;
-    const data = snap.data();
+    var data = snap.data();
     if (!data.updatedAt) return;
     if (data.products) STATE.products = data.products;
-    if (data.base)     STATE.base     = data.base;
+    if (data.base) STATE.base = data.base;
     if (data.custoProcesso) STATE.custoProcesso = data.custoProcesso;
-    document.getElementById('hdr-badge').textContent = STATE.products.length + ' peças';
+    if (data.ordens) STATE.ordens = data.ordens;
+    document.getElementById('hdr-badge').textContent = STATE.products.length + ' pecas';
     renderDashboard();
     renderTable();
   });
-}
-// ══════════════════════════════════════════════
-//  EVOLUTIZE ERP — Integração
-// ══════════════════════════════════════════════
-let _evoConfig = { url: '', token: '' };
-let _evoData   = null;
-let _evoConnected = false;
-
-function evoSaveConfig() {
-  _evoConfig.url   = document.getElementById('evo-api-url').value.trim();
-  _evoConfig.token = document.getElementById('evo-api-token').value.trim();
-  if (!_evoConfig.url) { alert('Informe a URL da API Evolutize.'); return; }
-  evoSetStatus('connecting', 'Conectando ao Evolutize...');
-  evoRefresh();
-}
-
-function evoSetStatus(state, msg) {
-  const dot = document.getElementById('evo-status-dot');
-  const txt = document.getElementById('evo-status-msg');
-  if (!dot || !txt) return;
-  const colors = { ok:'#3eac48', error:'#e05353', connecting:'#f59e0b', demo:'#64748b' };
-  dot.style.background = colors[state] || '#aaa';
-  txt.textContent = msg;
-}
-
-async function evoRefresh() {
-  const btn = document.getElementById('evo-refresh-btn');
-  if (btn) { btn.disabled = true; btn.textContent = '⟳ Buscando...'; }
-
-  // If API configured, try real connection
-  if (_evoConfig.url) {
-    try {
-      evoSetStatus('connecting', 'Buscando dados do Evolutize...');
-      const res = await fetch(`${_evoConfig.url}/rotacoes?periodo=30`, {
-        headers: { 'Authorization': `Bearer ${_evoConfig.token}`, 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(8000)
-      });
-      if (res.ok) {
-        const json = await res.json();
-        _evoData = json.data || json;
-        _evoConnected = true;
-        evoSetStatus('ok', 'Conectado ao Evolutize — dados atualizados');
-        document.getElementById('evo-last-sync').textContent = 'Sync: ' + new Date().toLocaleString('pt-BR');
-        evoRenderData(_evoData);
-        if (btn) { btn.disabled = false; btn.textContent = '⟳ Atualizar'; }
-        return;
-      }
-    } catch(e) {
-      evoSetStatus('error', 'Erro ao conectar: ' + (e.message || 'timeout'));
-    }
-  }
-
-  // Use demo data from local products
-  evoSetStatus('demo', 'Modo demonstração — conecte ao Evolutize para dados reais');
-  _evoData = evoGenerateDemoData();
-  document.getElementById('evo-last-sync').textContent = 'Demo: ' + new Date().toLocaleString('pt-BR');
-  evoRenderData(_evoData);
-  if (btn) { btn.disabled = false; btn.textContent = '⟳ Atualizar'; }
-}
-
-function evoGenerateDemoData() {
-  // Generate demo rotation data from existing products
-  return STATE.products.slice(0, 30).map(p => ({
-    cod: p.cod,
-    desc: p.desc,
-    material: p.material,
-    qtd_rotacao: p.forecast30 || 0,
-    custo_unit: p.custo_atual || 0,
-    custo_total: (p.forecast30 || 0) * (p.custo_atual || 0),
-    status: p.forecast30 > 0 ? 'ativo' : 'sem_rotacao'
-  }));
-}
-
-function evoRender() {
-  if (!_evoData) evoRefresh();
-  else evoRenderData(_evoData);
-}
-
-function evoRenderData(data) {
-  // KPI cards
-  const totalQtd   = data.reduce((s, r) => s + (r.qtd_rotacao || 0), 0);
-  const totalCusto = data.reduce((s, r) => s + (r.custo_total || 0), 0);
-  const ativos     = data.filter(r => r.status === 'ativo').length;
-  const semRot     = data.filter(r => r.status === 'sem_rotacao').length;
-
-  const grid = document.getElementById('evo-kpi-grid');
-  if (grid) grid.innerHTML = [
-    { label: 'Total Rotações (30d)', val: totalQtd.toLocaleString('pt-BR'), sub: `${data.length} produtos`, color: '#0366a5' },
-    { label: 'Custo Total Rotação',  val: BRL(totalCusto),                  sub: 'últimos 30 dias',         color: '#3eac48' },
-    { label: 'Produtos Ativos',      val: ativos,                            sub: 'com rotação no período',  color: '#f59e0b' },
-    { label: 'Sem Rotação',          val: semRot,                            sub: 'forecast zerado',         color: '#e05353' },
-  ].map(k => `
-    <div class="kpi">
-      <div class="kpi-label">${k.label}</div>
-      <div class="kpi-val" style="color:${k.color};font-size:1.4rem">${k.val}</div>
-      <div class="kpi-sub">${k.sub}</div>
-    </div>`).join('');
-
-  // Table
-  window._evoTableData = data;
-  evoFilterTable();
-}
-
-function evoFilterTable() {
-  const q   = (document.getElementById('evo-search')?.value || '').toLowerCase();
-  const data = (window._evoTableData || []).filter(r =>
-    !q || r.cod.toLowerCase().includes(q) || r.desc.toLowerCase().includes(q)
-  );
-  const tbody = document.getElementById('evo-tbody');
-  const empty = document.getElementById('evo-empty');
-  if (!tbody) return;
-  if (!data.length) {
-    tbody.innerHTML = '';
-    if (empty) empty.style.display = 'block';
-    return;
-  }
-  if (empty) empty.style.display = 'none';
-  tbody.innerHTML = data.map(r => {
-    const statusBadge = r.status === 'ativo'
-      ? '<span style="background:rgba(62,172,72,0.12);color:#3eac48;padding:2px 8px;border-radius:20px;font-size:0.75rem">● Ativo</span>'
-      : '<span style="background:rgba(100,116,139,0.12);color:#64748b;padding:2px 8px;border-radius:20px;font-size:0.75rem">○ Sem rotação</span>';
-    return `<tr style="border-bottom:1px solid var(--b3);transition:background 0.15s" onmouseover="this.style.background='rgba(3,102,165,0.04)'" onmouseout="this.style.background=''">
-      <td style="padding:9px 10px;font-family:'IBM Plex Mono',monospace;font-size:0.78rem;color:var(--b1)">${r.cod}</td>
-      <td style="padding:9px 10px;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.desc}</td>
-      <td style="padding:9px 10px;text-align:right;font-family:'IBM Plex Mono',monospace">${(r.qtd_rotacao||0).toLocaleString('pt-BR')}</td>
-      <td style="padding:9px 10px;text-align:right;font-family:'IBM Plex Mono',monospace">${BRL(r.custo_unit||0)}</td>
-      <td style="padding:9px 10px;text-align:right;font-family:'IBM Plex Mono',monospace;font-weight:600">${BRL(r.custo_total||0)}</td>
-      <td style="padding:9px 10px;text-align:center">${statusBadge}</td>
-    </tr>`;
-  }).join('');
-}
-
+});
 </script>
 </body>
 </html>
