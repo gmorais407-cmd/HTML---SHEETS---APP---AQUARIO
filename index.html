@@ -126,7 +126,6 @@ body {
 
 /* ── DONUT ── */
 .donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-canvas#donutCanvas { display: block; }
 .donut-legend { width: 100%; display: flex; flex-direction: column; gap: 7px; }
 .leg-row { display: flex; align-items: center; justify-content: space-between; font-size: 0.75rem; }
 .leg-dot { width: 9px; height: 9px; border-radius: 2px; margin-right: 7px; flex-shrink: 0; }
@@ -588,7 +587,6 @@ tbody tr:last-child td { border-bottom: none; }
 /* ── CHART TOOLTIP ── */
 .sparkline-wrap { cursor: crosshair; }
 .bar-track { cursor: pointer; }
-canvas#donutCanvas { cursor: pointer; }
 
 /* ══════════════════════════════════════════
    MOBILE & TABLET RESPONSIVE
@@ -632,6 +630,7 @@ canvas#donutCanvas { cursor: pointer; }
 /* ── TABLET (≤1100px) ── */
 @media (max-width: 1100px) {
   .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  #dash-kpi-strip { grid-template-columns: repeat(3, 1fr) !important; }
   .charts-row { grid-template-columns: 1fr 1fr; }
   .cad-split { grid-template-columns: 1fr; }
   .hist-row { grid-template-columns: 1fr !important; }
@@ -657,6 +656,7 @@ canvas#donutCanvas { cursor: pointer; }
 
   /* KPI grid */
   .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 16px; }
+  #dash-kpi-strip { grid-template-columns: repeat(2, 1fr) !important; }
   .kpi { padding: 12px 13px; }
   .kpi-val { font-size: 1.2rem; }
 
@@ -664,6 +664,10 @@ canvas#donutCanvas { cursor: pointer; }
   .charts-row { grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
   .chart-card { padding: 14px 14px; }
   .hist-row { grid-template-columns: 1fr !important; gap: 10px; }
+  #page-dashboard > div[style*="grid-template-columns:1fr 280px"] { grid-template-columns: 1fr !important; }
+  #page-dashboard > div[style*="grid-template-columns:1fr 1fr 200px"] { grid-template-columns: 1fr !important; }
+  #page-dashboard > div[style*="grid-template-columns:1fr 1fr;gap"] { grid-template-columns: 1fr !important; }
+  #dash-spark-row { grid-template-columns: 1fr 1fr !important; }
   .history-chart { padding: 14px 14px; }
 
   /* Section headers */
@@ -837,40 +841,93 @@ canvas#donutCanvas { cursor: pointer; }
 
 <!-- ══════════ DASHBOARD ══════════ -->
 <div id="page-dashboard" class="page active">
-  <div class="sec-head">
-    <div><div class="sec-title">Dashboard <span>de Fichas</span></div>
-    <div class="sec-sub">Visão de fichas em progresso, concluídas e gastos (base ERP)</div></div>
-  </div>
-  <div class="kpi-grid" id="kpi-grid"></div>
-  <div class="charts-row">
-    <div class="chart-card">
-      <div class="chart-title">Fichas por Status</div>
-      <div class="donut-wrap">
-        <canvas id="donutCanvas" width="180" height="180"></canvas>
-        <div class="donut-legend" id="donut-legend"></div>
-      </div>
+
+  <!-- ── HEADER ROW ── -->
+  <div class="sec-head" style="margin-bottom:16px">
+    <div>
+      <div class="sec-title">Produção <span>ERP</span></div>
+      <div class="sec-sub" id="dash-sync-label">Conecte o Evolutize para dados em tempo real &nbsp;·&nbsp; exibindo demonstração</div>
     </div>
-    <div class="chart-card">
-      <div class="chart-title">Top 10 — Fichas em Progresso (gasto realizado)</div>
-      <div class="bar-list" id="top-forecast-bars"></div>
-    </div>
-    <div class="chart-card">
-      <div class="chart-title">Gasto por Status</div>
-      <div class="bar-list" id="val-mat-bars"></div>
-    </div>
-  </div>
-  <div class="hist-row" style="grid-template-columns:1fr 1fr">
-    <div class="history-chart">
-      <div class="chart-title">Distribuição de Gastos por Cliente</div>
-      <div id="chart-mat-dist" style="margin-top:10px"></div>
-    </div>
-    <div class="history-chart">
-      <div class="chart-title">Última Atualização por Status</div>
-      <div id="chart-taxa-atual" style="margin-top:10px"></div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <select id="dash-period-sel" onchange="renderDashboard()" style="padding:6px 12px;border:1.5px solid var(--border);border-radius:7px;font-family:'Barlow',sans-serif;font-size:0.82rem;background:var(--surface);color:var(--text);cursor:pointer">
+        <option value="7">Últimos 7 dias</option>
+        <option value="30" selected>Últimos 30 dias</option>
+        <option value="90">Últimos 90 dias</option>
+      </select>
+      <button class="btn-primary" onclick="renderDashboard()" style="padding:6px 14px;font-size:0.82rem">⟳ Atualizar</button>
     </div>
   </div>
 
-  <!-- TOOLTIP for charts -->
+  <!-- ── KPI STRIP ── -->
+  <div id="dash-kpi-strip" class="kpi-grid" style="grid-template-columns:repeat(6,1fr);margin-bottom:20px"></div>
+
+  <!-- ── ROW 1: Line chart + Donut ── -->
+  <div style="display:grid;grid-template-columns:1fr 280px;gap:14px;margin-bottom:14px">
+
+    <!-- Produção diária (line + area) -->
+    <div class="chart-card" style="padding:18px 20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="chart-title" style="margin-bottom:0;border:none;padding:0">Peças Produzidas por Dia</div>
+        <div style="display:flex;gap:6px" id="dash-line-legend"></div>
+      </div>
+      <canvas id="cvLineDaily" height="160" style="width:100%;display:block"></canvas>
+    </div>
+
+    <!-- Status donut -->
+    <div class="chart-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
+      <div class="chart-title" style="align-self:flex-start;margin-bottom:12px">Status das Ordens</div>
+      <canvas id="cvDonut" width="160" height="160"></canvas>
+      <div id="dash-donut-legend" style="margin-top:12px;width:100%;display:flex;flex-direction:column;gap:6px"></div>
+    </div>
+  </div>
+
+  <!-- ── ROW 2: Bar material + Line custo + Gauge eficiência ── -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 200px;gap:14px;margin-bottom:14px">
+
+    <!-- Produção por material (horizontal bar) -->
+    <div class="chart-card">
+      <div class="chart-title" style="margin-bottom:14px">Produção por Material (un.)</div>
+      <canvas id="cvBarMat" height="180" style="width:100%;display:block"></canvas>
+    </div>
+
+    <!-- Custo realizado vs previsto (grouped bar) -->
+    <div class="chart-card">
+      <div class="chart-title" style="margin-bottom:14px">Custo Previsto vs Realizado (R$)</div>
+      <canvas id="cvBarCusto" height="180" style="width:100%;display:block"></canvas>
+    </div>
+
+    <!-- Gauge eficiência -->
+    <div class="chart-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
+      <div class="chart-title" style="align-self:flex-start;margin-bottom:8px">Eficiência</div>
+      <canvas id="cvGauge" width="160" height="100"></canvas>
+      <div id="dash-gauge-val" style="font-size:2rem;font-weight:900;font-family:'IBM Plex Mono',monospace;color:var(--b1);margin-top:4px">—</div>
+      <div style="font-size:0.7rem;color:var(--text2);letter-spacing:0.5px">Realizado / Previsto</div>
+    </div>
+  </div>
+
+  <!-- ── ROW 3: Top clientes + Ordens recentes ── -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+
+    <!-- Top clientes bar chart -->
+    <div class="chart-card">
+      <div class="chart-title" style="margin-bottom:14px">Top Clientes por Gasto (R$)</div>
+      <div id="dash-bar-clientes"></div>
+    </div>
+
+    <!-- Ordens recentes mini-table -->
+    <div class="chart-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="chart-title" style="margin-bottom:0;border:none;padding:0">Ordens de Produção Recentes</div>
+        <span id="dash-orders-count" style="font-size:0.72rem;color:var(--text2);font-family:'IBM Plex Mono',monospace"></span>
+      </div>
+      <div id="dash-ordens-table"></div>
+    </div>
+  </div>
+
+  <!-- ── ROW 4: Tendência semanal sparklines ── -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:4px" id="dash-spark-row"></div>
+
+  <!-- TOOLTIP -->
   <div id="chart-tooltip" style="position:fixed;z-index:3000;pointer-events:none;display:none;background:#0f1e2e;color:#fff;padding:8px 13px;border-radius:8px;font-size:0.78rem;font-family:'IBM Plex Mono',monospace;box-shadow:0 4px 16px rgba(0,0,0,0.25);white-space:nowrap;border:1px solid rgba(255,255,255,0.1)"></div>
 </div>
 
@@ -1753,159 +1810,508 @@ function nav(page, btn) {
 //  DASHBOARD
 // ══════════════════════════════════════════════
 function renderDashboard() {
+  const period = parseInt(document.getElementById('dash-period-sel')?.value || '30');
   const fichas = STATE.fichas || [];
-  const statusMeta = [
-    { key: 'em_progresso', label: 'Em Progresso', color: '#f59e0b' },
-    { key: 'concluida', label: 'Concluídas', color: '#10b981' }
-  ];
+  const products = STATE.products || [];
 
-  const totalFichas = fichas.length;
-  const totalPrevisto = fichas.reduce((s,f)=>s+(f.valorPrevisto||0),0);
-  const totalRealizado = fichas.reduce((s,f)=>s+(f.valorRealizado||0),0);
-  const totalEmProgresso = fichas.filter(f=>f.status==='em_progresso').length;
-  const totalConcluidas = fichas.filter(f=>f.status==='concluida').length;
+  // ── Generate rich demo data based on period ──
+  const demoData = genDemoData(period, products, fichas);
 
-  const gastoPorStatus = statusMeta.map(st =>
-    fichas.filter(f=>f.status===st.key).reduce((s,f)=>s+(f.valorRealizado||0),0)
-  );
-  const maxGastoStatus = Math.max(...gastoPorStatus, 1);
-
-  document.getElementById('kpi-grid').innerHTML = `
-    <div class="kpi"><div class="kpi-label">Total de Fichas</div><div class="kpi-val">${totalFichas}</div><div class="kpi-sub">originadas do ERP</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:100%;background:var(--accent)"></div></div></div>
-    <div class="kpi"><div class="kpi-label">Fichas em Progresso</div><div class="kpi-val" style="color:#f59e0b">${totalEmProgresso}</div><div class="kpi-sub">com execução aberta</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${totalFichas?((totalEmProgresso/totalFichas)*100):0}%;background:#f59e0b"></div></div></div>
-    <div class="kpi"><div class="kpi-label">Fichas Concluídas</div><div class="kpi-val" style="color:#10b981">${totalConcluidas}</div><div class="kpi-sub">finalizadas</div><div class="kpi-bar"><div class="kpi-bar-fill" style="width:${totalFichas?((totalConcluidas/totalFichas)*100):0}%;background:#10b981"></div></div></div>
-    <div class="kpi"><div class="kpi-label">Gasto Previsto</div><div class="kpi-val" style="color:var(--blue);font-size:1.2rem">${BRL(totalPrevisto)}</div><div class="kpi-sub">somatório das fichas</div></div>
-    <div class="kpi"><div class="kpi-label">Gasto Realizado</div><div class="kpi-val" style="color:var(--accent);font-size:1.2rem">${BRL(totalRealizado)}</div><div class="kpi-sub">valor já apontado</div></div>
-  `;
-  updateHeaderBadge('dashboard');
-
-  const canvas = document.getElementById('donutCanvas');
-  const ctx = canvas.getContext('2d');
-  const cx = 90, cy = 90, R = 78, r = 42;
-  const counts = statusMeta.map(st=>fichas.filter(f=>f.status===st.key).length);
-  const total = counts.reduce((a,b)=>a+b,0)||1;
-  let _donutAngles = [];
-  ctx.clearRect(0,0,180,180);
-  let ang = -Math.PI/2;
-  statusMeta.forEach((st,i)=>{
-    const sl = (counts[i]/total)*2*Math.PI;
-    _donutAngles.push({start:ang, end:ang+sl, label:st.label, count:counts[i], pct:(counts[i]/total*100)});
-    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,ang,ang+sl); ctx.closePath();
-    ctx.fillStyle = st.color; ctx.fill(); ang += sl;
-  });
-  ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.fillStyle='#fff'; ctx.fill();
-  ctx.fillStyle='#0f1e2e'; ctx.font='bold 18px Barlow,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText(totalFichas, cx, cy-7);
-  ctx.font='10px Barlow,sans-serif'; ctx.fillStyle='#556678';
-  ctx.fillText('fichas', cx, cy+9);
-
-  canvas.onmousemove = function(e) {
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left - cx, my = e.clientY - rect.top - cy;
-    const dist = Math.sqrt(mx*mx+my*my);
-    if (dist < r || dist > R) { showTip(null); return; }
-    const angle = Math.atan2(my, mx);
-    const normAngle = angle < -Math.PI/2 ? angle + 2*Math.PI : angle;
-    const seg = _donutAngles.find(s => normAngle >= s.start && normAngle < s.end);
-    if (seg) showTip(`<b>${seg.label}</b><br>${seg.count} fichas &nbsp;·&nbsp; ${seg.pct.toFixed(1)}%`, e.clientX, e.clientY);
-    else showTip(null);
-  };
-  canvas.onmouseleave = () => showTip(null);
-
-  document.getElementById('donut-legend').innerHTML = statusMeta.map((st,i)=>{
-    const pctVal = total > 0 ? (counts[i]/total*100).toFixed(1) : '0.0';
-    return `<div class="leg-row"><div class="leg-label"><div class="leg-dot" style="background:${st.color}"></div>${st.label}</div><div class="leg-val">${counts[i]} <span style="color:var(--text2);font-size:0.65rem">(${pctVal}%)</span></div></div>`;
-  }).join('');
-
-  const topF = [...fichas].filter(f=>f.status==='em_progresso').sort((a,b)=>(b.valorRealizado||0)-(a.valorRealizado||0)).slice(0,10);
-  const maxF = topF[0]?.valorRealizado||1;
-  document.getElementById('top-forecast-bars').innerHTML = topF.map(f=>{
-    const pctW = ((f.valorRealizado||0)/maxF*100).toFixed(1);
-    return `<div class="bar-row" onmouseenter="showTip('<b>${f.id}</b><br>${f.cliente}<br>${BRL(f.valorRealizado||0)} &nbsp;·&nbsp; ${pctW}% do máx',event.clientX,event.clientY)" onmouseleave="showTip(null)">
-      <div class="bar-lbl mono" title="${f.cliente}">${f.id}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${pctW}%;background:#f59e0b"></div></div>
-      <div class="bar-num">${BRL(f.valorRealizado||0)}</div>
-    </div>`;
-  }).join('') || '<div style="color:var(--text2);font-size:0.82rem">Sem fichas em progresso no momento.</div>';
-
-  document.getElementById('val-mat-bars').innerHTML = statusMeta.map((st,i)=>{
-    const pctW = (gastoPorStatus[i]/maxGastoStatus*100).toFixed(1);
-    return `<div class="bar-row" onmouseenter="showTip('<b>${st.label}</b><br>${BRL(gastoPorStatus[i])}<br>${pctW}% do maior status',event.clientX,event.clientY)" onmouseleave="showTip(null)">
-      <div class="bar-lbl">${st.label}</div>
-      <div class="bar-track"><div class="bar-fill" style="width:${pctW}%;background:${st.color}"></div></div>
-      <div class="bar-num">${BRL(gastoPorStatus[i])}</div>
-    </div>`;
-  }).join('');
-
-  renderMatDistChart(fichas);
-  renderTaxaAtualChart(statusMeta, fichas);
+  renderDashKPIs(demoData, fichas);
+  renderLineDaily(demoData.daily);
+  renderDonutOrdens(demoData.ordens);
+  renderBarMaterial(demoData.byMaterial, products);
+  renderBarCusto(demoData.custoSeries);
+  renderGaugeEficiencia(demoData.eficiencia);
+  renderBarClientes(demoData.clientes);
+  renderOrdensTable(demoData.ordens);
+  renderSparklines(demoData.sparks);
 }
 
-// ── CHART: Distribuição de gastos por cliente ──
-function renderMatDistChart(fichas) {
-  const el = document.getElementById('chart-mat-dist');
-  if (!el) return;
+// ── Demo data generator (replaced by ERP API when connected) ──
+function genDemoData(period, products, fichas) {
+  const mats = ['Niquel','Cromo','Estanho','Ouro'];
+  const clientes = ['Comercial Norte','Delta Auto Parts','AgroSul Equip.','Indústria Vértice','SatCom Brasil','MotoFlex Ltda','RadiAll S.A.'];
+  const rng = (a,b) => a + Math.random()*(b-a);
+  const irng = (a,b) => Math.round(rng(a,b));
 
-  const byCliente = {};
-  fichas.forEach(f => {
-    const key = f.cliente || 'Sem cliente';
-    byCliente[key] = (byCliente[key] || 0) + (f.valorRealizado || 0);
-  });
-
-  const rows = Object.entries(byCliente)
-    .map(([cliente, valor]) => ({ cliente, valor }))
-    .sort((a,b)=>b.valor-a.valor)
-    .slice(0, 8);
-
-  if (!rows.length) {
-    el.innerHTML = '<div style="color:var(--text2);font-size:0.82rem">Sem gastos de fichas para exibir.</div>';
-    return;
+  // daily production
+  const daily = [];
+  const base = period === 7 ? 380 : period === 30 ? 320 : 280;
+  for (let i = period-1; i >= 0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    const label = d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    daily.push({
+      label,
+      pecas: Math.round(base + Math.sin(i/3)*60 + rng(-40,40)),
+      custo: parseFloat((rng(1800,4200)).toFixed(2))
+    });
   }
 
-  const max = Math.max(...rows.map(r=>r.valor), 1);
-  el.innerHTML = rows.map(r => {
-    const w = (r.valor/max*100).toFixed(1);
-    return `<div class="bar-row" style="margin-bottom:10px" onmouseenter="showTip('<b>${r.cliente}</b><br>Gasto acumulado: ${BRL(r.valor)}',event.clientX,event.clientY)" onmouseleave="showTip(null)">
-      <div class="bar-lbl" style="width:132px;font-weight:700">${r.cliente}</div>
-      <div class="bar-track" style="height:18px;border-radius:4px">
-        <div class="bar-fill" style="width:${w}%;background:var(--blue);height:100%;border-radius:4px;transition:width 0.8s cubic-bezier(.4,0,.2,1)"></div>
+  // orders
+  const statusOpts = ['concluida','em_progresso','em_progresso','concluida','aguardando'];
+  const ordens = fichas.length > 0 ? fichas.map(f=>({...f})) : Array.from({length:12}, (_,i) => ({
+    id: `OP-${String(2026*100+i+1).padStart(7,'0')}`,
+    cliente: clientes[i % clientes.length],
+    material: mats[i % mats.length],
+    qtdPrevista: irng(200,2000),
+    qtdRealizada: irng(100,2000),
+    valorPrevisto: parseFloat(rng(3000,18000).toFixed(2)),
+    valorRealizado: parseFloat(rng(1500,18000).toFixed(2)),
+    status: statusOpts[i % statusOpts.length],
+    atualizadaEm: new Date(Date.now() - irng(0,period)*86400000).toLocaleDateString('pt-BR')
+  }));
+
+  // by material
+  const byMaterial = mats.map(m => ({
+    mat: m,
+    qtd: irng(800, 5000),
+    color: {Niquel:'#0366a5',Cromo:'#3eac48',Estanho:'#84b3cb',Ouro:'#a07010'}[m]
+  })).sort((a,b)=>b.qtd-a.qtd);
+
+  // custo series (weekly buckets)
+  const weeks = Math.min(Math.ceil(period/7), 8);
+  const custoSeries = Array.from({length:weeks},(_,i)=>({
+    label: `S${i+1}`,
+    previsto: parseFloat(rng(12000,22000).toFixed(0)),
+    realizado: parseFloat(rng(10000,21000).toFixed(0))
+  }));
+
+  // eficiencia
+  const totalPrev = ordens.reduce((s,o)=>s+(o.valorPrevisto||0),0);
+  const totalReal = ordens.reduce((s,o)=>s+(o.valorRealizado||0),0);
+  const eficiencia = totalPrev > 0 ? Math.min((totalReal/totalPrev)*100, 120) : 85;
+
+  // top clientes
+  const cMap = {};
+  ordens.forEach(o => { cMap[o.cliente]=(cMap[o.cliente]||0)+(o.valorRealizado||0); });
+  const clientes_top = Object.entries(cMap).map(([n,v])=>({nome:n,valor:v})).sort((a,b)=>b.valor-a.valor).slice(0,6);
+
+  // sparklines (4 metrics)
+  const sparks = [
+    { label:'Peças/Dia', color:'#0366a5', data: Array.from({length:14},()=>irng(200,600)) },
+    { label:'Custo Médio', color:'#3eac48', data: Array.from({length:14},()=>irng(1500,4500)) },
+    { label:'Ordens Abertas', color:'#f59e0b', data: Array.from({length:14},()=>irng(2,12)) },
+    { label:'Taxa Eficiência', color:'#a07010', data: Array.from({length:14},()=>irng(70,105)) }
+  ];
+
+  return { daily, ordens, byMaterial, custoSeries, eficiencia, clientes: clientes_top, sparks };
+}
+
+// ── KPI Strip ──
+function renderDashKPIs(d, fichas) {
+  const ordens = d.ordens;
+  const totalPecas = d.daily.reduce((s,r)=>s+r.pecas,0);
+  const totalCusto = d.daily.reduce((s,r)=>s+r.custo,0);
+  const concluidas = ordens.filter(o=>o.status==='concluida').length;
+  const emProg = ordens.filter(o=>o.status==='em_progresso').length;
+  const aguard = ordens.filter(o=>o.status==='aguardando').length;
+  const efic = d.eficiencia;
+
+  const kpis = [
+    { label:'Peças Produzidas', val: totalPecas.toLocaleString('pt-BR'), sub:'no período', color:'var(--b1)', bar:100 },
+    { label:'Custo Total', val: BRL(totalCusto), sub:'realizado ERP', color:'#3eac48', bar:80 },
+    { label:'Ordens Concluídas', val: concluidas, sub:'finalizadas', color:'#10b981', bar:(concluidas/Math.max(ordens.length,1)*100) },
+    { label:'Em Progresso', val: emProg, sub:'execução aberta', color:'#f59e0b', bar:(emProg/Math.max(ordens.length,1)*100) },
+    { label:'Aguardando', val: aguard, sub:'na fila', color:'#94a3b8', bar:(aguard/Math.max(ordens.length,1)*100) },
+    { label:'Eficiência', val: efic.toFixed(1)+'%', sub:'real/previsto', color: efic>=95?'#10b981':efic>=80?'#f59e0b':'#e05353', bar: Math.min(efic,100) }
+  ];
+
+  const grid = document.getElementById('dash-kpi-strip');
+  if (!grid) return;
+  grid.innerHTML = kpis.map(k=>`
+    <div class="kpi">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-val" style="color:${k.color};font-size:1.35rem">${k.val}</div>
+      <div class="kpi-sub">${k.sub}</div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:${k.bar.toFixed(1)}%;background:${k.color}"></div></div>
+    </div>`).join('');
+}
+
+// ── Line chart: peças produzidas por dia ──
+function renderLineDaily(daily) {
+  const canvas = document.getElementById('cvLineDaily');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * devicePixelRatio || 600;
+  canvas.height = 160 * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const W = canvas.offsetWidth || 600, H = 160;
+
+  const PAD = {top:14, right:14, bottom:32, left:50};
+  const cW = W - PAD.left - PAD.right;
+  const cH = H - PAD.top - PAD.bottom;
+  ctx.clearRect(0,0,W,H);
+
+  // Show max 14 labels to avoid crowding
+  const step = Math.ceil(daily.length / 14);
+  const vals = daily.map(d=>d.pecas);
+  const maxV = Math.max(...vals, 1);
+
+  // Grid lines
+  ctx.strokeStyle = '#e2eaf3'; ctx.lineWidth = 1;
+  for (let i=0;i<=4;i++) {
+    const y = PAD.top + cH - (i/4)*cH;
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left+cW, y); ctx.stroke();
+    ctx.fillStyle='#556678'; ctx.font=`${9*devicePixelRatio/devicePixelRatio}px Barlow,sans-serif`;
+    ctx.textAlign='right';
+    ctx.fillText(Math.round(maxV*i/4).toLocaleString('pt-BR'), PAD.left-5, y+3);
+  }
+
+  // Area fill
+  ctx.beginPath();
+  daily.forEach((d,i) => {
+    const x = PAD.left + (i/(daily.length-1||1))*cW;
+    const y = PAD.top + cH - (d.pecas/maxV)*cH;
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.lineTo(PAD.left+cW, PAD.top+cH);
+  ctx.lineTo(PAD.left, PAD.top+cH);
+  ctx.closePath();
+  const grad = ctx.createLinearGradient(0,PAD.top,0,PAD.top+cH);
+  grad.addColorStop(0,'rgba(3,102,165,0.18)');
+  grad.addColorStop(1,'rgba(3,102,165,0.01)');
+  ctx.fillStyle = grad; ctx.fill();
+
+  // Line
+  ctx.beginPath(); ctx.strokeStyle='#0366a5'; ctx.lineWidth=2.5; ctx.lineJoin='round';
+  daily.forEach((d,i) => {
+    const x = PAD.left + (i/(daily.length-1||1))*cW;
+    const y = PAD.top + cH - (d.pecas/maxV)*cH;
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // X labels
+  ctx.fillStyle='#556678'; ctx.font='9px Barlow,sans-serif'; ctx.textAlign='center';
+  daily.forEach((d,i) => {
+    if (i % step !== 0 && i !== daily.length-1) return;
+    const x = PAD.left + (i/(daily.length-1||1))*cW;
+    ctx.fillText(d.label, x, H-5);
+  });
+
+  // Dots on hover via mousemove
+  canvas._daily = daily; canvas._PAD = PAD; canvas._cW = cW; canvas._cH = cH; canvas._maxV = maxV;
+  canvas.onmousemove = function(e) {
+    const rect = canvas.getBoundingClientRect();
+    const mx = (e.clientX - rect.left) / rect.width * W;
+    const idx = Math.round((mx - PAD.left) / (cW/(daily.length-1||1)));
+    if (idx < 0 || idx >= daily.length) { showTip(null); return; }
+    const d = daily[idx];
+    showTip(`<b>${d.label}</b><br>Peças: ${d.pecas.toLocaleString('pt-BR')}<br>Custo: ${BRL(d.custo)}`, e.clientX, e.clientY);
+  };
+  canvas.onmouseleave = ()=>showTip(null);
+
+  // Legend
+  const leg = document.getElementById('dash-line-legend');
+  if (leg) leg.innerHTML = `
+    <span style="display:flex;align-items:center;gap:4px;font-size:0.72rem;color:var(--text2)"><span style="width:18px;height:3px;background:#0366a5;border-radius:2px;display:inline-block"></span>Peças/dia</span>`;
+}
+
+// ── Donut: status ordens ──
+function renderDonutOrdens(ordens) {
+  const canvas = document.getElementById('cvDonut');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W=160, H=160, cx=80, cy=80, R=70, r=38;
+  ctx.clearRect(0,0,W,H);
+
+  const groups = [
+    { key:'concluida',    label:'Concluídas', color:'#10b981' },
+    { key:'em_progresso', label:'Em Progresso', color:'#f59e0b' },
+    { key:'aguardando',   label:'Aguardando', color:'#94a3b8' }
+  ];
+  const counts = groups.map(g=>ordens.filter(o=>o.status===g.key).length);
+  const total = counts.reduce((a,b)=>a+b,0)||1;
+  const angles = [];
+  let ang = -Math.PI/2;
+
+  groups.forEach((g,i) => {
+    const sl = (counts[i]/total)*2*Math.PI;
+    angles.push({start:ang, end:ang+sl, ...g, count:counts[i], pct:(counts[i]/total*100)});
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,R,ang,ang+sl); ctx.closePath();
+    ctx.fillStyle=g.color; ctx.fill(); ang+=sl;
+  });
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.fillStyle='#fff'; ctx.fill();
+  ctx.fillStyle='#0f1e2e'; ctx.font='bold 16px Barlow,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(total, cx, cy-6);
+  ctx.font='9px Barlow,sans-serif'; ctx.fillStyle='#556678';
+  ctx.fillText('ordens', cx, cy+8);
+
+  canvas.onmousemove = function(e){
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left-cx, my=e.clientY-rect.top-cy;
+    const dist=Math.sqrt(mx*mx+my*my);
+    if(dist<r||dist>R){showTip(null);return;}
+    let a=Math.atan2(my,mx); if(a<-Math.PI/2) a+=2*Math.PI;
+    const seg=angles.find(s=>a>=s.start&&a<s.end);
+    if(seg) showTip(`<b>${seg.label}</b><br>${seg.count} ordens &nbsp;·&nbsp; ${seg.pct.toFixed(1)}%`,e.clientX,e.clientY);
+  };
+  canvas.onmouseleave=()=>showTip(null);
+
+  const leg = document.getElementById('dash-donut-legend');
+  if (leg) leg.innerHTML = groups.map((g,i)=>`
+    <div class="leg-row"><div class="leg-label"><div class="leg-dot" style="background:${g.color}"></div>${g.label}</div>
+    <div class="leg-val">${counts[i]} <span style="color:var(--text2);font-size:0.65rem">(${(counts[i]/total*100).toFixed(0)}%)</span></div></div>`).join('');
+}
+
+// ── Bar: produção por material ──
+function renderBarMaterial(byMat, products) {
+  const canvas = document.getElementById('cvBarMat');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * devicePixelRatio || 400;
+  canvas.height = 180 * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const W = canvas.offsetWidth || 400, H = 180;
+
+  const PAD = {top:8, right:60, bottom:8, left:72};
+  const cW = W-PAD.left-PAD.right, cH = H-PAD.top-PAD.bottom;
+  ctx.clearRect(0,0,W,H);
+
+  const maxQ = Math.max(...byMat.map(m=>m.qtd), 1);
+  const rowH = cH/byMat.length;
+
+  byMat.forEach((m,i) => {
+    const y = PAD.top + i*rowH + rowH*0.2;
+    const bH = rowH*0.6;
+    const bW = (m.qtd/maxQ)*cW;
+
+    // bg track
+    ctx.fillStyle='#eef3f8';
+    ctx.beginPath(); roundRect(ctx, PAD.left, y, cW, bH, 4); ctx.fill();
+
+    // filled bar
+    const grad = ctx.createLinearGradient(PAD.left,0,PAD.left+bW,0);
+    grad.addColorStop(0, m.color); grad.addColorStop(1, m.color+'99');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); roundRect(ctx, PAD.left, y, bW, bH, 4); ctx.fill();
+
+    // label
+    ctx.fillStyle='#0f1e2e'; ctx.font='bold 10px Barlow,sans-serif'; ctx.textAlign='right';
+    ctx.fillText(m.mat, PAD.left-6, y+bH/2+4);
+
+    // value
+    ctx.fillStyle='#556678'; ctx.font='10px IBM Plex Mono,monospace'; ctx.textAlign='left';
+    ctx.fillText(m.qtd.toLocaleString('pt-BR'), PAD.left+bW+6, y+bH/2+4);
+  });
+
+  // hover
+  canvas._byMat = byMat; canvas._PAD2 = PAD; canvas._cW2 = cW; canvas._rowH = rowH;
+  canvas.onmousemove = function(e) {
+    const rect=canvas.getBoundingClientRect();
+    const my=(e.clientY-rect.top)/(rect.height)*H;
+    const idx=Math.floor((my-PAD.top)/(cH/byMat.length));
+    if(idx<0||idx>=byMat.length){showTip(null);return;}
+    const m=byMat[idx];
+    showTip(`<b>${m.mat}</b><br>${m.qtd.toLocaleString('pt-BR')} unidades`,e.clientX,e.clientY);
+  };
+  canvas.onmouseleave=()=>showTip(null);
+}
+
+// ── Grouped bar: custo previsto vs realizado ──
+function renderBarCusto(series) {
+  const canvas = document.getElementById('cvBarCusto');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth * devicePixelRatio || 400;
+  canvas.height = 180 * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  const W = canvas.offsetWidth || 400, H = 180;
+
+  const PAD = {top:14, right:10, bottom:28, left:54};
+  const cW = W-PAD.left-PAD.right, cH = H-PAD.top-PAD.bottom;
+  ctx.clearRect(0,0,W,H);
+
+  const allVals = series.flatMap(s=>[s.previsto,s.realizado]);
+  const maxV = Math.max(...allVals, 1);
+  const n = series.length;
+  const groupW = cW/n;
+  const bW = groupW*0.32;
+  const gap = groupW*0.05;
+
+  // grid
+  ctx.strokeStyle='#e2eaf3'; ctx.lineWidth=1;
+  for(let i=0;i<=3;i++){
+    const y=PAD.top+cH-(i/3)*cH;
+    ctx.beginPath();ctx.moveTo(PAD.left,y);ctx.lineTo(PAD.left+cW,y);ctx.stroke();
+    ctx.fillStyle='#556678';ctx.font='8px IBM Plex Mono,monospace';ctx.textAlign='right';
+    ctx.fillText('R$'+(maxV*i/3/1000).toFixed(0)+'k',PAD.left-3,y+3);
+  }
+
+  series.forEach((s,i) => {
+    const gx = PAD.left + i*groupW + groupW*0.1;
+    const prevH = (s.previsto/maxV)*cH;
+    const realH = (s.realizado/maxV)*cH;
+
+    // previsto (blue)
+    ctx.fillStyle='rgba(3,102,165,0.55)';
+    ctx.beginPath(); roundRect(ctx, gx, PAD.top+cH-prevH, bW, prevH, 3); ctx.fill();
+
+    // realizado (green)
+    ctx.fillStyle='rgba(62,172,72,0.80)';
+    ctx.beginPath(); roundRect(ctx, gx+bW+gap, PAD.top+cH-realH, bW, realH, 3); ctx.fill();
+
+    // x label
+    ctx.fillStyle='#556678';ctx.font='9px Barlow,sans-serif';ctx.textAlign='center';
+    ctx.fillText(s.label, gx+bW+gap/2, H-6);
+  });
+
+  // legend
+  ctx.fillStyle='rgba(3,102,165,0.55)'; ctx.fillRect(PAD.left,4,10,8);
+  ctx.fillStyle='#556678';ctx.font='8px Barlow,sans-serif';ctx.textAlign='left';
+  ctx.fillText('Previsto',PAD.left+13,11);
+  ctx.fillStyle='rgba(62,172,72,0.80)'; ctx.fillRect(PAD.left+70,4,10,8);
+  ctx.fillText('Realizado',PAD.left+83,11);
+
+  canvas._series=series; canvas._PAD3=PAD; canvas._cW3=cW; canvas._cH3=cH; canvas._maxV3=maxV; canvas._n=n; canvas._groupW=groupW;
+  canvas.onmousemove=function(e){
+    const rect=canvas.getBoundingClientRect();
+    const mx=(e.clientX-rect.left)/(rect.width)*W;
+    const idx=Math.floor((mx-PAD.left)/groupW);
+    if(idx<0||idx>=series.length){showTip(null);return;}
+    const s=series[idx];
+    showTip(`<b>${s.label}</b><br>Previsto: ${BRL(s.previsto)}<br>Realizado: ${BRL(s.realizado)}`,e.clientX,e.clientY);
+  };
+  canvas.onmouseleave=()=>showTip(null);
+}
+
+// ── Gauge eficiência ──
+function renderGaugeEficiencia(efic) {
+  const canvas = document.getElementById('cvGauge');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W=160, H=100; const cx=80, cy=90, R=68, r=46;
+  ctx.clearRect(0,0,W,H);
+
+  const startAng = Math.PI, endAng = 2*Math.PI;
+  const fillAng = startAng + (Math.min(efic,120)/120)*(endAng-startAng);
+
+  // bg arc
+  ctx.beginPath(); ctx.arc(cx,cy,R,startAng,endAng);
+  ctx.strokeStyle='#e2eaf3'; ctx.lineWidth=R-r; ctx.stroke();
+
+  // fill arc
+  const color = efic>=95?'#10b981':efic>=80?'#f59e0b':'#e05353';
+  ctx.beginPath(); ctx.arc(cx,cy,R,startAng,fillAng);
+  ctx.strokeStyle=color; ctx.lineWidth=R-r; ctx.stroke();
+
+  // inner clear
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,2*Math.PI); ctx.fillStyle='#fff'; ctx.fill();
+
+  // label
+  const valEl = document.getElementById('dash-gauge-val');
+  if (valEl) { valEl.textContent=efic.toFixed(1)+'%'; valEl.style.color=color; }
+}
+
+// ── Bar: top clientes ──
+function renderBarClientes(clientes) {
+  const el = document.getElementById('dash-bar-clientes');
+  if (!el) return;
+  const max = Math.max(...clientes.map(c=>c.valor), 1);
+  const colors = ['#0366a5','#3eac48','#f59e0b','#a07010','#84b3cb','#94a3b8'];
+  el.innerHTML = clientes.map((c,i) => {
+    const w = (c.valor/max*100).toFixed(1);
+    return `<div class="bar-row" style="margin-bottom:9px"
+      onmouseenter="showTip('<b>${c.nome}</b><br>Gasto: ${BRL(c.valor)}',event.clientX,event.clientY)"
+      onmouseleave="showTip(null)">
+      <div class="bar-lbl" style="width:120px;font-weight:600">${c.nome}</div>
+      <div class="bar-track" style="height:16px;border-radius:4px">
+        <div class="bar-fill" style="width:${w}%;background:${colors[i%colors.length]};height:100%;border-radius:4px"></div>
       </div>
-      <div style="min-width:110px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--text2)">${BRL(r.valor)}</div>
+      <div style="min-width:90px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:0.7rem;color:var(--text2)">${BRL(c.valor)}</div>
     </div>`;
   }).join('');
 }
 
-// ── CHART: Última atualização por status ──
-function renderTaxaAtualChart(statusMeta, fichas) {
-  const el = document.getElementById('chart-taxa-atual');
+// ── Mini orders table ──
+function renderOrdensTable(ordens) {
+  const el = document.getElementById('dash-ordens-table');
+  const cnt = document.getElementById('dash-orders-count');
   if (!el) return;
+  if (cnt) cnt.textContent = ordens.length + ' ordens';
+  const statusStyle = {
+    concluida:    'background:rgba(16,185,129,0.12);color:#10b981',
+    em_progresso: 'background:rgba(245,158,11,0.12);color:#f59e0b',
+    aguardando:   'background:rgba(148,163,184,0.12);color:#64748b'
+  };
+  const statusLabel = { concluida:'Concluída', em_progresso:'Em Progresso', aguardando:'Aguardando' };
+  el.innerHTML = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:0.78rem">
+    <thead><tr style="border-bottom:2px solid var(--border)">
+      <th style="text-align:left;padding:6px 8px;color:var(--text2);font-weight:700;font-size:0.68rem;letter-spacing:0.8px;text-transform:uppercase">Ordem</th>
+      <th style="text-align:left;padding:6px 8px;color:var(--text2);font-weight:700;font-size:0.68rem;letter-spacing:0.8px;text-transform:uppercase">Cliente</th>
+      <th style="text-align:right;padding:6px 8px;color:var(--text2);font-weight:700;font-size:0.68rem;letter-spacing:0.8px;text-transform:uppercase">Realizado</th>
+      <th style="text-align:center;padding:6px 8px;color:var(--text2);font-weight:700;font-size:0.68rem;letter-spacing:0.8px;text-transform:uppercase">Status</th>
+    </tr></thead>
+    <tbody>
+    ${ordens.slice(0,8).map(o=>`<tr style="border-bottom:1px solid var(--border);transition:background 0.12s" onmouseover="this.style.background='rgba(3,102,165,0.04)'" onmouseout="this.style.background=''">
+      <td style="padding:7px 8px;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--b1)">${o.id}</td>
+      <td style="padding:7px 8px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.cliente}</td>
+      <td style="padding:7px 8px;text-align:right;font-family:'IBM Plex Mono',monospace">${BRL(o.valorRealizado||0)}</td>
+      <td style="padding:7px 8px;text-align:center"><span style="padding:2px 8px;border-radius:20px;font-size:0.68rem;white-space:nowrap;${statusStyle[o.status]||statusStyle.aguardando}">${statusLabel[o.status]||o.status}</span></td>
+    </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
 
-  const rows = statusMeta.map(st => {
-    const lista = fichas.filter(f=>f.status===st.key);
-    const total = lista.reduce((s,f)=>s+(f.valorRealizado||0),0);
-    const ultima = lista
-      .map(f=>f.atualizadaEm)
-      .filter(Boolean)
-      .sort()
-      .slice(-1)[0] || '—';
-    return { label: st.label, color: st.color, total, ultima, qtd: lista.length };
-  });
-
-  const max = Math.max(...rows.map(r=>r.total), 1);
-  el.innerHTML = rows.map(r => {
-    const w = (r.total/max*100).toFixed(1);
-    return `<div class="bar-row" style="margin-bottom:8px" onmouseenter="showTip('<b>${r.label}</b><br>Fichas: ${r.qtd}<br>Gasto: ${BRL(r.total)}<br>Última atualização: ${r.ultima}',event.clientX,event.clientY)" onmouseleave="showTip(null)">
-      <div style="width:108px;font-size:0.7rem;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span style="font-weight:700;color:${r.color}">${r.label}</span></div>
-      <div class="bar-track" style="height:14px;border-radius:3px">
-        <div class="bar-fill" style="width:${w}%;height:100%;border-radius:3px;background:${r.color};transition:width 0.8s cubic-bezier(.4,0,.2,1)"></div>
-      </div>
-      <div style="min-width:120px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:0.68rem;color:var(--text2)">${r.ultima==='—' ? '—' : r.ultima}</div>
+// ── Sparkline cards (bottom row) ──
+function renderSparklines(sparks) {
+  const row = document.getElementById('dash-spark-row');
+  if (!row) return;
+  row.innerHTML = sparks.map((s,si) => {
+    const id = `cvSpark${si}`;
+    return `<div class="chart-card" style="padding:14px 16px">
+      <div style="font-size:0.65rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:2px">${s.label}</div>
+      <div style="font-size:1.5rem;font-weight:900;font-family:'IBM Plex Mono',monospace;color:${s.color};line-height:1.1">${s.data[s.data.length-1].toLocaleString('pt-BR')}</div>
+      <div style="font-size:0.7rem;color:var(--text2);margin-bottom:8px">último valor</div>
+      <canvas id="${id}" height="40" style="width:100%;display:block"></canvas>
     </div>`;
   }).join('');
 
-  el.innerHTML += `<div style="display:flex;gap:12px;margin-top:10px;flex-wrap:wrap">
-    ${rows.map(r=>`<div style="display:flex;align-items:center;gap:6px;font-size:0.7rem;color:var(--text2)"><span style="width:10px;height:10px;border-radius:50%;background:${r.color};display:inline-block"></span>${r.label}</div>`).join('')}
-  </div>`;
+  // draw after DOM insert
+  requestAnimationFrame(() => {
+    sparks.forEach((s,si) => {
+      const cv = document.getElementById(`cvSpark${si}`);
+      if (!cv) return;
+      const ctx = cv.getContext('2d');
+      cv.width = cv.offsetWidth * devicePixelRatio || 160;
+      cv.height = 40 * devicePixelRatio;
+      ctx.scale(devicePixelRatio, devicePixelRatio);
+      const W = cv.offsetWidth || 160, H = 40;
+      const data = s.data;
+      const maxD = Math.max(...data, 1), minD = Math.min(...data, 0);
+      const range = maxD - minD || 1;
+
+      // area
+      ctx.beginPath();
+      data.forEach((v,i) => {
+        const x = (i/(data.length-1))*W;
+        const y = H - ((v-minD)/range)*(H-4) - 2;
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      });
+      ctx.lineTo(W,H); ctx.lineTo(0,H); ctx.closePath();
+      const g=ctx.createLinearGradient(0,0,0,H);
+      g.addColorStop(0,s.color+'44'); g.addColorStop(1,s.color+'05');
+      ctx.fillStyle=g; ctx.fill();
+
+      // line
+      ctx.beginPath(); ctx.strokeStyle=s.color; ctx.lineWidth=2; ctx.lineJoin='round';
+      data.forEach((v,i) => {
+        const x=(i/(data.length-1))*W;
+        const y=H-((v-minD)/range)*(H-4)-2;
+        i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+      });
+      ctx.stroke();
+    });
+  });
+}
+
+// ── Utility: rounded rect ──
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
 }
 
 // ── TOOLTIP HELPER ──
@@ -2743,6 +3149,9 @@ async function initApp() {
   updateHeaderBadge('dashboard');
   renderDashboard();
   renderTable();
+  window.addEventListener('resize', () => {
+    if (document.getElementById('page-dashboard').classList.contains('active')) renderDashboard();
+  });
   simRenderItems();
 
   // Listen for real-time changes from other users
